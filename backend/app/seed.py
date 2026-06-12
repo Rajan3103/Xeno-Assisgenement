@@ -1,0 +1,363 @@
+import random
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.core.database import SessionLocal, engine, Base
+from app.models.models import User, Customer, Order, Campaign, Communication, Segment
+from app.core.security import get_password_hash
+
+# DTC Fashion Brand seed metadata
+FEMALE_FIRST_NAMES = [
+    "Emma", "Olivia", "Ava", "Sophia", "Isabella", "Mia", "Charlotte", "Amelia", "Harper", "Evelyn", 
+    "Abigail", "Emily", "Elizabeth", "Sofia", "Avery", "Ella", "Scarlett", "Grace", "Chloe", "Victoria",
+    "Lily", "Aria", "Zoey", "Hannah", "Layla", "Lillian", "Nora", "Mila", "Aubrey", "Ellie"
+]
+
+MALE_FIRST_NAMES = [
+    "Liam", "Noah", "Oliver", "Elijah", "William", "James", "Benjamin", "Lucas", "Henry", "Alexander", 
+    "Mason", "Michael", "Ethan", "Daniel", "Jacob", "Logan", "Jackson", "Levi", "Sebastian", "Jack",
+    "Owen", "Theodore", "Aiden", "Samuel", "Joseph", "John", "David", "Wyatt", "Carter", "Julian"
+]
+
+LAST_NAMES = [
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Rodriguez", "Wilson", 
+    "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez", "Moore", "Martin", "Jackson", "Thompson", "White",
+    "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King"
+]
+
+EMAIL_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", "hotmail.com"]
+
+# Fashion interests to map to the 'company' field in B2C
+FASHION_PROFILES = [
+    "Luxury & Designer Wear",
+    "Athleisure & Activewear",
+    "Streetwear & Premium Denim",
+    "Minimalist & Sustainable Basics",
+    "Vintage, Retro & Pre-loved",
+    "Fast Fashion & Seasonal Trends"
+]
+
+# US Area Codes representing key demographics (NYC, LA, SF, Miami, Seattle, Chicago, Las Vegas)
+AREA_CODES = [212, 310, 415, 305, 206, 312, 702, 617, 213, 718]
+
+ORDER_STATUSES = ["Pending", "Completed", "Shipped", "Cancelled"]
+
+def generate_order_amount() -> float:
+    # 70% standard carts ($35 - $120)
+    # 20% medium hauls ($120 - $350)
+    # 10% premium high-value purchases ($350 - $1200)
+    r = random.random()
+    if r < 0.70:
+        return round(random.uniform(35.0, 120.0), 2)
+    elif r < 0.90:
+        return round(random.uniform(120.0, 350.0), 2)
+    else:
+        return round(random.uniform(350.0, 1200.0), 2)
+
+def generate_order_date(customer_created_at: datetime) -> datetime:
+    # Returns order date between customer signup date and now with seasonal probabilities
+    now = datetime.utcnow()
+    max_days_back = (now - customer_created_at).days
+    if max_days_back <= 0:
+        return now
+    
+    while True:
+        days_ago = random.randint(0, max_days_back)
+        candidate_date = now - timedelta(days=days_ago)
+        
+        month = candidate_date.month
+        day = candidate_date.day
+        
+        # Seasonal e-commerce weight adjustments
+        weight = 0.35  # baseline weight
+        
+        if month == 11 and day >= 15:  # Black Friday / Cyber Monday surge
+            weight = 1.0
+        elif month == 12 and day <= 24:  # Christmas retail rush
+            weight = 0.95
+        elif month == 6 and day >= 15:  # Mid-Year Summer Sales
+            weight = 0.80
+        elif month == 7 and day <= 15:  # Summer Clearouts
+            weight = 0.75
+        elif month == 3:  # Spring Launch Season
+            weight = 0.60
+        elif month == 9 and day >= 10:  # Back-to-school / Autumn Launch
+            weight = 0.55
+            
+        if random.random() < weight:
+            return candidate_date
+
+def main():
+    print("Initializing SQLite Database Schema...")
+    Base.metadata.create_all(bind=engine)
+    
+    db: Session = SessionLocal()
+    try:
+        # Clear existing data to guarantee exact requested counts
+        print("Clearing existing database tables...")
+        db.execute(text("DELETE FROM communication_events"))
+        db.execute(text("DELETE FROM communications"))
+        db.execute(text("DELETE FROM orders"))
+        db.execute(text("DELETE FROM customer_segment_association"))
+        db.execute(text("DELETE FROM customers"))
+        db.execute(text("DELETE FROM segments"))
+        db.execute(text("DELETE FROM campaigns"))
+        db.commit()
+
+        # 1. Create a Default Admin User if it doesn't exist
+        admin = db.query(User).filter(User.email == "admin@xenopulse.ai").first()
+        if not admin:
+            print("Creating default admin user...")
+            admin = User(
+                email="admin@xenopulse.ai",
+                hashed_password=get_password_hash("admin123"),
+                full_name="System Administrator",
+                is_active=1
+            )
+            db.add(admin)
+            db.commit()
+            db.refresh(admin)
+        
+        # 2. Create Segments
+        print("Creating segments...")
+        vip_segment = Segment(name="VIP Customers", description="Customers with total completed order spending above $1,000")
+        inactive_segment = Segment(name="Inactive Leads", description="Leads that have never ordered or are inactive")
+        active_segment = Segment(name="Active Buyers", description="Customers with completed orders")
+        
+        db.add_all([vip_segment, inactive_segment, active_segment])
+        db.commit()
+        db.refresh(vip_segment)
+        db.refresh(inactive_segment)
+        db.refresh(active_segment)
+
+        # 3. Create campaigns
+        print("Creating campaigns...")
+        campaign_1 = Campaign(
+            name="Summer VIP Collection 2026",
+            segment="Customers with total order spending above $1,000",
+            message="Hi! As one of our top VIP customers, claim early access to our Summer Line and get 20% off. Use code VIP20.",
+            channel="Email",
+            status="Active"
+        )
+        campaign_2 = Campaign(
+            name="SMS Re-engagement Blast",
+            segment="Inactive Leads",
+            message="We miss you! Re-discover this season's trends. Use code COMEBACK for 15% off at checkout.",
+            channel="SMS",
+            status="Active"
+        )
+        
+        db.add_all([campaign_1, campaign_2])
+        db.commit()
+        db.refresh(campaign_1)
+        db.refresh(campaign_2)
+
+        # 4. Generate 1,000 customers
+        print("Generating 1,000 customers...")
+        customers = []
+        for i in range(1000):
+            # Mix gender names realistically
+            if random.random() < 0.52: # Slightly more female shoppers for fashion demographic
+                first_name = random.choice(FEMALE_FIRST_NAMES)
+            else:
+                first_name = random.choice(MALE_FIRST_NAMES)
+                
+            last_name = random.choice(LAST_NAMES)
+            name = f"{first_name} {last_name}"
+            email = f"{first_name.lower()}.{last_name.lower()}{random.randint(10, 999)}@{random.choice(EMAIL_DOMAINS)}"
+            
+            # Realistic US phone numbers
+            phone = f"+1-{random.choice(AREA_CODES)}-555-{random.randint(1000, 9999)}"
+            
+            # Map B2C customer preference profiles to the company column
+            fashion_profile = random.choice(FASHION_PROFILES)
+            
+            # SignUp date distributed over the last 365 days
+            days_ago = random.randint(0, 365)
+            created_at = datetime.utcnow() - timedelta(days=days_ago)
+
+            customer = Customer(
+                name=name,
+                email=email,
+                phone=phone,
+                company=fashion_profile,
+                status="Lead",  # will be updated based on order history later
+                created_at=created_at,
+                owner_id=admin.id
+            )
+            customers.append(customer)
+            db.add(customer)
+            
+        db.commit()
+        # Refresh to get IDs
+        all_customers = db.query(Customer).all()
+        print(f"Successfully generated 1,000 customers.")
+
+        # 5. Distribute exactly 5,000 orders using loyalty power-laws
+        print("Distributing 5,000 orders...")
+        
+        customer_ids = [c.id for c in all_customers]
+        random.shuffle(customer_ids)
+        
+        # Segment customer cohorts for orders distribution
+        vip_ids = customer_ids[:50]        # 5% VIPs (heavy purchasers)
+        repeat_ids = customer_ids[50:250]   # 20% loyal repeats
+        casual_ids = customer_ids[250:750]  # 50% single/double cart shoppers
+        lead_ids = customer_ids[750:]       # 25% window shoppers (0 orders)
+        
+        customer_orders_counts = {cid: 0 for cid in customer_ids}
+        orders_remaining = 5000
+
+        # Assign VIP orders (average 15-30 orders)
+        for cid in vip_ids:
+            cnt = random.randint(15, 30)
+            customer_orders_counts[cid] = cnt
+            orders_remaining -= cnt
+
+        # Assign Repeats (average 5-12 orders)
+        for cid in repeat_ids:
+            cnt = random.randint(5, 12)
+            customer_orders_counts[cid] = cnt
+            orders_remaining -= cnt
+
+        # Assign Casual (average 1-3 orders)
+        for cid in casual_ids:
+            cnt = random.randint(1, 3)
+            customer_orders_counts[cid] = cnt
+            orders_remaining -= cnt
+
+        # Re-balance counts to exactly 5,000 orders
+        if orders_remaining > 0:
+            pool = vip_ids + repeat_ids
+            for _ in range(orders_remaining):
+                cid = random.choice(pool)
+                customer_orders_counts[cid] += 1
+        elif orders_remaining < 0:
+            while orders_remaining < 0:
+                cid = random.choice(casual_ids + repeat_ids)
+                if customer_orders_counts[cid] > 1:
+                    customer_orders_counts[cid] -= 1
+                    orders_remaining += 1
+
+        # Generate orders in database
+        orders_list = []
+        orders_created = 0
+        
+        for customer in all_customers:
+            cnt = customer_orders_counts[customer.id]
+            if cnt == 0:
+                continue
+                
+            for _ in range(cnt):
+                status_val = random.choice(ORDER_STATUSES)
+                total_amount = generate_order_amount()
+                order_date = generate_order_date(customer.created_at)
+                
+                order = Order(
+                    customer_id=customer.id,
+                    order_date=order_date,
+                    total_amount=total_amount,
+                    status=status_val
+                )
+                db.add(order)
+                orders_list.append(order)
+                orders_created += 1
+                
+                if orders_created % 1000 == 0:
+                    db.commit()
+                    print(f"Created {orders_created} orders...")
+                    
+        db.commit()
+        print(f"Successfully generated exactly {orders_created} orders.")
+
+        # 6. Align Customer Status, Segments, and Communications
+        print("Rebuilding segment relationships and communications...")
+        all_customers = db.query(Customer).all()
+        all_orders = db.query(Order).all()
+
+        # Build customer spend maps and order date maps
+        customer_spending = {}
+        customer_last_order = {}
+        
+        for order in all_orders:
+            if order.status == "Completed":
+                customer_spending[order.customer_id] = customer_spending.get(order.customer_id, 0.0) + order.total_amount
+            
+            # Keep track of last order date
+            if order.customer_id not in customer_last_order or order.order_date > customer_last_order[order.customer_id]:
+                customer_last_order[order.customer_id] = order.order_date
+
+        segment_count = 0
+        communication_count = 0
+        now = datetime.utcnow()
+
+        for customer in all_customers:
+            spending = customer_spending.get(customer.id, 0.0)
+            last_order_date = customer_last_order.get(customer.id, None)
+            
+            # Determine Customer Status
+            if last_order_date:
+                # If they have ordered, status is Customer. If last order was > 180 days ago, they are Inactive
+                days_since_order = (now - last_order_date).days
+                if days_since_order > 180:
+                    customer.status = "Inactive"
+                else:
+                    customer.status = "Customer"
+            else:
+                # 0 orders
+                customer.status = "Lead" if random.random() < 0.70 else "Contacted"
+
+            customer.segments = []
+            
+            # VIP: Completed spending > 1000
+            if spending > 1000.0:
+                customer.segments.append(vip_segment)
+                segment_count += 1
+                
+            # Active Buyer: has any completed spending
+            if spending > 0.0:
+                customer.segments.append(active_segment)
+                segment_count += 1
+                
+            # Inactive Leads: status Lead/Inactive and 0 spending
+            if customer.status in ["Lead", "Inactive"] and spending == 0.0:
+                customer.segments.append(inactive_segment)
+                segment_count += 1
+
+            # Dispatch mock logs (10% chance per customer)
+            if random.random() < 0.10:
+                campaign = random.choice([campaign_1, campaign_2])
+                comm = Communication(
+                    customer_id=customer.id,
+                    campaign_id=campaign.id,
+                    type=campaign.channel,
+                    status=random.choice(["Sent", "Delivered", "Failed", "Opened", "Read", "Clicked"]),
+                    sent_at=now - timedelta(days=random.randint(0, 30))
+                )
+                db.add(comm)
+                communication_count += 1
+
+        db.commit()
+        print(f"Assigned {segment_count} customer-segment relationships.")
+        print(f"Created {communication_count} sample communications.")
+        
+        # Summary
+        print("\n--- DTC Fashion Seeding Summary ---")
+        print(f"Users Count:         {db.query(User).count()}")
+        print(f"Customers Count:     {db.query(Customer).count()}")
+        print(f"Orders Count:        {db.query(Order).count()}")
+        print(f"Campaigns Count:     {db.query(Campaign).count()}")
+        print(f"Segments Count:      {db.query(Segment).count()}")
+        print(f"Communications Count:{db.query(Communication).count()}")
+        print("-----------------------------------\n")
+        print("Fashion Ecommerce Seeding Completed Successfully!")
+
+    except Exception as e:
+        db.rollback()
+        print(f"An error occurred during database seeding: {e}")
+        raise e
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    main()
