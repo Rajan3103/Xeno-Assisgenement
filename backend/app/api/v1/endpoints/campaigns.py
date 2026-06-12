@@ -49,9 +49,9 @@ def dispatch_campaign_messages(campaign_id: int, owner_id: int):
             else:
                 sql_filter = "status = 'Lead'"
                 
-        # 2. Get target customers matching the filter
-        raw_query = f"SELECT id, email, phone FROM customers WHERE owner_id = :owner_id AND ({sql_filter})"
-        results = db.execute(text(raw_query), {"owner_id": owner_id}).fetchall()
+        # 2. Get target customers matching the filter (ignoring owner_id for shared cohort pool)
+        raw_query = f"SELECT id, email, phone FROM customers WHERE ({sql_filter})"
+        results = db.execute(text(raw_query)).fetchall()
         
         logger.info(f"[CampaignDispatch] Found {len(results)} target customers for segment: '{campaign.segment}'")
         

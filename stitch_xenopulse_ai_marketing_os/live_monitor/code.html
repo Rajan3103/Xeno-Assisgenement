@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>XenoPulse AI | Live Campaign Monitor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#003824",
+                    "surface-container-high": "#1b2b3f",
+                    "surface-variant": "#26364a",
+                    "surface-tint": "#c0c1ff",
+                    "on-surface-variant": "#c7c4d7",
+                    "on-tertiary-container": "#000703",
+                    "surface-dim": "#031427",
+                    "surface": "#031427",
+                    "inverse-surface": "#d3e4fe",
+                    "on-background": "#d3e4fe",
+                    "surface-container-lowest": "#000f21",
+                    "on-secondary-fixed": "#2c0051",
+                    "surface-container-highest": "#26364a",
+                    "primary-fixed": "#e1e0ff",
+                    "on-error": "#690005",
+                    "tertiary-fixed": "#6ffbbe",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "secondary": "#ddb7ff",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "tertiary-container": "#00885d",
+                    "on-secondary-container": "#d6a9ff",
+                    "on-surface": "#d3e4fe",
+                    "secondary-fixed": "#f0dbff",
+                    "inverse-on-surface": "#213145",
+                    "primary": "#c0c1ff",
+                    "outline-variant": "#464554",
+                    "error": "#ffb4ab",
+                    "on-secondary-fixed-variant": "#6900b3",
+                    "on-primary-container": "#0d0096",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-low": "#0b1c30",
+                    "error-container": "#93000a",
+                    "on-tertiary-fixed": "#002113",
+                    "on-primary": "#1000a9",
+                    "on-primary-fixed": "#07006c",
+                    "secondary-fixed-dim": "#ddb7ff",
+                    "inverse-primary": "#494bd6",
+                    "on-secondary": "#490080",
+                    "surface-bright": "#2a3a4f",
+                    "primary-container": "#8083ff",
+                    "surface-container": "#102034",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "outline": "#908fa0",
+                    "background": "#031427",
+                    "tertiary": "#4edea3",
+                    "secondary-container": "#6f00be",
+                    "on-primary-fixed-variant": "#2f2ebe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "1.5rem",
+                    "xs": "0.25rem",
+                    "xxl": "4rem",
+                    "md": "1rem",
+                    "base": "4px",
+                    "gutter": "24px",
+                    "sm": "0.5rem",
+                    "container-max": "1440px",
+                    "xl": "2rem"
+            },
+            "fontFamily": {
+                    "label-sm": ["Geist"],
+                    "headline-lg": ["Geist"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Geist"],
+                    "mono-sm": ["Geist"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Geist"],
+                    "display-sm": ["Geist"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Geist"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                    "mono-sm": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-sm": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #031427;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .glass-panel {
+            background: rgba(16, 32, 52, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(192, 193, 255, 0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26364a; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-surface overflow-hidden">
+<!-- Sidebar Navigation Drawer -->
+<aside class="fixed inset-y-0 left-0 z-50 flex flex-col h-full w-80 rounded-r-xl bg-surface-container dark:bg-surface-container-low shadow-xl dark:shadow-none hidden md:flex">
+<div class="p-lg">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">XenoPulse AI</h1>
+</div>
+<div class="flex items-center px-lg py-4 mb-6">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-primary-container mr-4">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPuoHHOKigWKBe1ccaQz_1K7rKssEEp11gL1JjQelbSiGJw8nwR7M9d28ECKWuxQudSExoiIYzm6oKh7j5U-AsoyhZZC2Kmys8mIjOuPBm022hwM7fDLYLtJpiJD-tq5qDnqqQQrsg5de4Ppjx2aiTYFal0k2r3sBkWqEVuVEtcz1jFBb8_PI2fkvKuHCblsCiNMSpbz3uHuQD-sDxuvET2TQhM3rJqkH6L2WS5Q9CGbCMl4br6VkVW891hA3wIsJWB81m-thlI-8"/>
+</div>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Alex Executive</p>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">Marketing Director</p>
+<span class="text-[10px] uppercase tracking-widest text-primary font-bold">Enterprise Tier</span>
+</div>
+</div>
+<nav class="flex-1 space-y-1 overflow-y-auto px-2">
+<!-- AI Command Center -->
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">terminal</span>
+<span class="font-label-md text-label-md">AI Command Center</span>
+</a>
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">group</span>
+<span class="font-label-md text-label-md">Customers</span>
+</a>
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">target</span>
+<span class="font-label-md text-label-md">Audiences</span>
+</a>
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">campaign</span>
+<span class="font-label-md text-label-md">Campaigns</span>
+</a>
+<!-- Live Monitor - ACTIVE -->
+<a class="flex items-center bg-primary-container dark:bg-primary-container text-on-primary-container dark:text-on-primary-container rounded-full mx-2 px-4 py-3 font-bold shadow-lg shadow-primary/20" href="#">
+<span class="material-symbols-outlined mr-3" style="font-variation-settings: 'FILL' 1;">sensors</span>
+<span class="font-label-md text-label-md">Live Monitor</span>
+<span class="ml-auto flex h-2 w-2 relative">
+<span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-on-primary-container opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-on-primary-container"></span>
+</span>
+</a>
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">lightbulb</span>
+<span class="font-label-md text-label-md">Insights</span>
+</a>
+<div class="pt-8 mt-8 border-t border-outline-variant/20">
+<a class="flex items-center text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant dark:hover:bg-surface-variant rounded-full transition-colors group" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-80 h-screen flex flex-col relative overflow-hidden bg-background">
+<!-- Top App Bar -->
+<header class="docked full-width top-0 sticky z-40 border-b border-outline-variant/30 dark:border-white/10 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl h-16 w-full flex justify-between items-center px-lg">
+<div class="flex items-center gap-4">
+<button class="md:hidden p-2 text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-on-surface">Live Campaign Monitor</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 
+                        Real-time AI Processing Active
+                    </span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="hidden sm:flex items-center gap-2 bg-surface-container-high/50 px-3 py-1.5 rounded-full border border-outline-variant/20">
+<span class="text-tertiary font-mono-sm text-mono-sm">LATENCY: 12ms</span>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high/50 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Dynamic Content -->
+<div class="flex-1 overflow-y-auto p-gutter relative">
+<!-- Global Pulse Visualization background -->
+
+<div class="max-w-container-max mx-auto space-y-gutter relative z-10">
+<!-- KPI Bento Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<!-- Sent -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1 overflow-hidden relative group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full translate-x-4 -translate-y-4"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Sent</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-sent">1,248,302</span>
+<div class="flex items-center text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span>+4.2%</span>
+</div>
+</div>
+<!-- Delivered -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Delivered</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-delivered">1,212,094</span>
+<div class="flex items-center text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>97.1%</span>
+</div>
+</div>
+<!-- Opened -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Opened</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-opened">482,109</span>
+<div class="flex items-center text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">analytics</span>
+<span>39.8%</span>
+</div>
+</div>
+<!-- Read -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Read</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-read">312,445</span>
+<div class="flex items-center text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">visibility</span>
+<span>25.7%</span>
+</div>
+</div>
+<!-- Clicked -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Clicked</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-clicked">84,102</span>
+<div class="flex items-center text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">touch_app</span>
+<span>6.9%</span>
+</div>
+</div>
+<!-- Converted -->
+<div class="glass-panel p-lg rounded-xl flex flex-col gap-1 border-primary/30 bg-primary/5">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Converted</span>
+<span class="font-display-sm text-display-sm text-on-surface" id="stat-converted">12,408</span>
+<div class="flex items-center text-secondary font-label-sm">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span>1.2%</span>
+</div>
+</div>
+</div>
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Live Activity Feed (6 cols) -->
+<div class="lg:col-span-7 space-y-gutter">
+<div class="glass-panel rounded-xl flex flex-col h-[600px]">
+<div class="p-lg border-b border-outline-variant/20 flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">dynamic_feed</span>
+                                    Live Pulse Stream
+                                </h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-label-sm font-label-sm border border-outline-variant/30">ALL EVENTS</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-label-sm font-label-sm border border-primary/30">CONVERSIONS ONLY</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-lg space-y-4" id="activity-feed">
+<!-- Dynamic entries injected via JS -->
+<div class="flex gap-4 items-start p-4 bg-surface-container-high/30 rounded-lg animate-in fade-in slide-in-from-right duration-500">
+<div class="w-10 h-10 rounded-full bg-tertiary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary text-lg">shopping_cart</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Conversion: Retail Alpha Journey</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant opacity-50">Just now</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">User ID #8841 purchased "Luxe Leather Tote" (Value: $249.00)</p>
+</div>
+</div>
+<div class="flex gap-4 items-start p-4 bg-surface-container-high/10 rounded-lg opacity-80">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-lg">touch_app</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-label-md text-label-md text-on-surface">Click Event: Spring Collection SMS</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant opacity-50">2s ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">User ID #1294 clicked "Shop Now" in SMS funnel.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start p-4 bg-surface-container-high/10 rounded-lg opacity-60">
+<div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-lg">mail</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-label-md text-label-md text-on-surface">Email Opened: Early Access Invite</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant opacity-50">5s ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">User ID #4402 opened Campaign: ID_SPRING_VIP.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Mini Funnels and Visualizations (5 cols) -->
+<div class="lg:col-span-5 space-y-gutter">
+<!-- Delivery Funnel -->
+<div class="glass-panel rounded-xl p-lg space-y-6">
+<h3 class="font-label-md text-label-md font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">filter_alt</span>
+                                Delivery Efficiency
+                            </h3>
+<div class="space-y-4">
+<div class="relative pt-1">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm">Sent to ISP</span>
+<span class="font-mono-sm text-mono-sm">1.2M</span>
+</div>
+<div class="overflow-hidden h-2 text-xs flex rounded-full bg-surface-container-highest">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary" style="width:100%"></div>
+</div>
+</div>
+<div class="relative pt-1 pl-4 border-l border-outline-variant/30">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Delivered</span>
+<span class="font-mono-sm text-mono-sm">97.1%</span>
+</div>
+<div class="overflow-hidden h-2 text-xs flex rounded-full bg-surface-container-highest">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-container" style="width:97%"></div>
+</div>
+</div>
+<div class="relative pt-1 pl-8 border-l border-outline-variant/30">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Engagement</span>
+<span class="font-mono-sm text-mono-sm">40.2%</span>
+</div>
+<div class="overflow-hidden h-2 text-xs flex rounded-full bg-surface-container-highest">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary" style="width:40%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Real-time Conversion Pulse -->
+<div class="glass-panel rounded-xl p-lg overflow-hidden relative min-h-[220px] flex flex-col">
+<div class="relative z-10">
+<h3 class="font-label-md text-label-md font-bold text-on-surface-variant uppercase tracking-widest mb-4">Conversion Heatmap</h3>
+<div class="flex items-end gap-2 h-24">
+<!-- Bar Chart Simulation -->
+<div class="flex-1 bg-primary/20 rounded-t h-12 animate-pulse"></div>
+<div class="flex-1 bg-primary/40 rounded-t h-16 animate-pulse" style="animation-delay: 0.2s"></div>
+<div class="flex-1 bg-primary/60 rounded-t h-20 animate-pulse" style="animation-delay: 0.4s"></div>
+<div class="flex-1 bg-primary/30 rounded-t h-14 animate-pulse" style="animation-delay: 0.1s"></div>
+<div class="flex-1 bg-primary/80 rounded-t h-24 animate-pulse" style="animation-delay: 0.5s"></div>
+<div class="flex-1 bg-primary/50 rounded-t h-18 animate-pulse" style="animation-delay: 0.3s"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-10 animate-pulse" style="animation-delay: 0.2s"></div>
+</div>
+</div>
+<div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none"></div>
+</div>
+<!-- AI Prediction Engine -->
+<div class="glass-panel rounded-xl p-lg border-l-4 border-l-tertiary">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-tertiary">auto_graph</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface">AI PREDICTION</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Campaign is trending 12.4% above baseline. Projected conversion lift by end-of-day: <span class="text-tertiary font-bold">+18.2%</span>.</p>
+<div class="mt-4 flex gap-2">
+<button class="flex-1 bg-tertiary text-on-tertiary font-label-md py-2 rounded-lg hover:brightness-110 transition-all">BOOST CAMPAIGN</button>
+<button class="flex-1 border border-outline-variant text-on-surface font-label-md py-2 rounded-lg hover:bg-surface-variant transition-all">VIEW INSIGHTS</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- FAB for Quick Campaign Toggles -->
+<button class="fixed bottom-24 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-50 md:hidden">
+<span class="material-symbols-outlined">add</span>
+</button>
+<!-- Bottom Nav Bar Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined">terminal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined">group</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl p-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sensors</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+</nav>
+</main>
+<script>
+        // Micro-interactions and Simulation
+        const activityFeed = document.getElementById('activity-feed');
+        const stats = {
+            sent: 1248302,
+            delivered: 1212094,
+            opened: 482109,
+            read: 312445,
+            clicked: 84102,
+            converted: 12408
+        };
+
+        const updateStat = (id, value) => {
+            const el = document.getElementById(`stat-${id}`);
+            if (el) {
+                el.innerText = value.toLocaleString();
+            }
+        };
+
+        const eventTypes = [
+            { type: 'Conversion', icon: 'shopping_cart', color: 'text-tertiary', bg: 'bg-tertiary/20', action: 'purchased' },
+            { type: 'Click', icon: 'touch_app', color: 'text-primary', bg: 'bg-primary/20', action: 'clicked link' },
+            { type: 'Opened', icon: 'mail', color: 'text-secondary', bg: 'bg-secondary/20', action: 'opened email' }
+        ];
+
+        const products = ['Luxe Leather Tote', 'Silk Evening Scarf', 'Modernist Watch', 'Organic Cotton Tee', 'Heritage Denim'];
+
+        const simulateTraffic = () => {
+            // Update random stats
+            Object.keys(stats).forEach(key => {
+                const growth = Math.floor(Math.random() * 5);
+                stats[key] += growth;
+                updateStat(key, stats[key]);
+            });
+
+            // Randomly inject new activity feed item
+            if (Math.random() > 0.4) {
+                const event = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+                const product = products[Math.floor(Math.random() * products.length)];
+                const userId = Math.floor(1000 + Math.random() * 9000);
+                
+                const newItem = document.createElement('div');
+                newItem.className = 'flex gap-4 items-start p-4 bg-surface-container-high/30 rounded-lg animate-in fade-in slide-in-from-right duration-500 border border-primary/5';
+                newItem.innerHTML = `
+                    <div class="w-10 h-10 rounded-full ${event.bg} flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined ${event.color} text-lg">${event.icon}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between">
+                            <span class="font-label-md text-label-md text-on-surface font-bold">${event.type}: Real-time Stream</span>
+                            <span class="font-mono-sm text-mono-sm text-on-surface-variant opacity-50">Just now</span>
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">User #${userId} ${event.action} "${product}"</p>
+                    </div>
+                `;
+
+                activityFeed.insertBefore(newItem, activityFeed.firstChild);
+                
+                // Keep feed at max 20 items
+                if (activityFeed.children.length > 20) {
+                    activityFeed.removeChild(activityFeed.lastChild);
+                }
+            }
+        };
+
+        setInterval(simulateTraffic, 1500);
+    </script>
+</body></html>

@@ -38,7 +38,7 @@ XenoPulse AI is a premium, state-of-the-art marketing automation and CRM platfor
 
 ```mermaid
 graph TD
-    A[Next.js 16 Client] -->|HTTP / JSON| B[FastAPI CRM Backend :8000]
+    A[Vite React SPA Client] -->|HTTP / JSON Proxy| B[FastAPI CRM Backend :8000]
     B -->|Fetch / Filter| C[(SQLite Database)]
     B -->|HTTP Send Request| D[FastAPI Channel Service :8001]
     D -->|Simulate Send| E[Recipient Devices]
@@ -47,7 +47,7 @@ graph TD
 ```
 
 ### Stack Components
-* **Frontend**: Next.js (App Router, React 19, TypeScript, Tailwind CSS v4, Lucide Icons, Recharts).
+* **Frontend**: React 19 with Vite SPA (TypeScript, Vanilla CSS, Lucide Icons, Recharts, client-side WebSocket/Socket.io mock simulation).
 * **Backend**: FastAPI (Python 3, SQLAlchemy, Pydantic v2, Pydantic Settings, JWT Auth).
 * **Channel Microservice**: FastAPI (Python 3, SMTP/SMTP stubs, Twilio SDK stubs).
 * **Database**: SQLite with PRAGMA foreign keys enabled.
@@ -82,13 +82,13 @@ python -m uvicorn app.main:app --port 8001
 ```
 Service will be live at `http://localhost:8001`.
 
-### 3. Run Frontend (Port 3000)
+### 3. Run Frontend (Port 5173)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open your browser at `http://localhost:3000`.
+Open your browser at `http://localhost:5173`.
 
 ### 4. Run Verification Tests
 To verify all end-to-end integration API checks, auth tokens, database updates, retries, and callback loops:
@@ -101,3 +101,4 @@ python test_api.py
 
 ## Render Production Deployment
 The backend configuration is prepared for Render with persistent disk storage for SQLite database safety. See [deploy_steps.md](deploy_steps.md) for step-by-step instructions.
+

@@ -104,7 +104,7 @@ def main():
         db.execute(text("DELETE FROM campaigns"))
         db.commit()
 
-        # 1. Create a Default Admin User if it doesn't exist
+        # 1. Create Default Users if they don't exist
         admin = db.query(User).filter(User.email == "admin@xenopulse.ai").first()
         if not admin:
             print("Creating default admin user...")
@@ -112,11 +112,37 @@ def main():
                 email="admin@xenopulse.ai",
                 hashed_password=get_password_hash("admin123"),
                 full_name="System Administrator",
+                role="Admin",
                 is_active=1
             )
             db.add(admin)
-            db.commit()
-            db.refresh(admin)
+        
+        admin_com = db.query(User).filter(User.email == "admin@xenopulse.com").first()
+        if not admin_com:
+            print("Creating Alex Executive admin user...")
+            admin_com = User(
+                email="admin@xenopulse.com",
+                hashed_password=get_password_hash("admin123"),
+                full_name="Alex Executive",
+                role="Admin",
+                is_active=1
+            )
+            db.add(admin_com)
+
+        manager = db.query(User).filter(User.email == "manager@xenopulse.com").first()
+        if not manager:
+            print("Creating Jane Manager manager user...")
+            manager = User(
+                email="manager@xenopulse.com",
+                hashed_password=get_password_hash("manager123"),
+                full_name="Jane Manager",
+                role="MarketingManager",
+                is_active=1
+            )
+            db.add(manager)
+            
+        db.commit()
+        db.refresh(admin)
         
         # 2. Create Segments
         print("Creating segments...")

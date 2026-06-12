@@ -19,6 +19,7 @@ def create_user(db: Session, user: UserCreate):
         email=user.email,
         hashed_password=hashed_password,
         full_name=user.full_name,
+        role=user.role or "MarketingManager",
         is_active=1 if user.is_active else 0
     )
     db.add(db_user)
@@ -41,7 +42,7 @@ def get_customers_by_owner(
     status: str = None,
     search: str = None
 ):
-    query = db.query(Customer).filter(Customer.owner_id == owner_id)
+    query = db.query(Customer)
     if status:
         query = query.filter(Customer.status == status)
     if search:
@@ -69,7 +70,7 @@ def get_orders_by_owner(
     customer_id: int = None,
     status: str = None
 ):
-    query = db.query(Order).join(Customer).filter(Customer.owner_id == owner_id)
+    query = db.query(Order).join(Customer)
     if customer_id:
         query = query.filter(Order.customer_id == customer_id)
     if status:

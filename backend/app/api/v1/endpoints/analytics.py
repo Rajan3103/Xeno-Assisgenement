@@ -16,10 +16,8 @@ def get_global_analytics(
     db: Session = Depends(get_db),
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
-    # Query all communications for customers owned by the current user
-    comms = db.query(Communication).join(Customer).filter(
-        Customer.owner_id == current_user.id
-    ).all()
+    # Query all communications (ignoring owner_id so all users see the shared telemetry)
+    comms = db.query(Communication).all()
     
     sent = len(comms)
     delivered = 0

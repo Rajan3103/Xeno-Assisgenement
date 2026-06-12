@@ -4,6 +4,7 @@ from typing import Optional
 class UserBase(BaseModel):
     email: str
     full_name: Optional[str] = None
+    role: Optional[str] = "MarketingManager"
     is_active: Optional[bool] = True
 
 class UserCreate(UserBase):

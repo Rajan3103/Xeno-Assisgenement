@@ -49,8 +49,6 @@ def read_customer(
     customer = crud_customer.get_customer(db, customer_id=id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    if customer.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
     return customer
 
 @router.put("/{id}", response_model=schema_customer.Customer)
@@ -64,8 +62,6 @@ def update_customer(
     customer = crud_customer.get_customer(db, customer_id=id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    if customer.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
     customer = crud_customer.update_customer(db, customer_id=id, customer=customer_in)
     return customer
 
@@ -79,7 +75,7 @@ def delete_customer(
     customer = crud_customer.get_customer(db, customer_id=id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    if customer.owner_id != current_user.id:
+    if getattr(current_user, "role", "MarketingManager") != "Admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     customer = crud_customer.delete_customer(db, customer_id=id)
     return customer

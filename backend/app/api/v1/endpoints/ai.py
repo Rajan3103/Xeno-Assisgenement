@@ -126,11 +126,10 @@ def generate_ai_segment(
             sql_filter = FALLBACK_PRESETS["lead"]
             
     try:
-        # Execute the generated SQL query safely scoping it to the current user's workspace
-        # We enforce multi-tenant separation using owner_id constraint
-        raw_query = f"SELECT * FROM customers WHERE owner_id = :owner_id AND ({sql_filter})"
+        # Execute the generated SQL query safely scoping it to the shared cohort pool
+        raw_query = f"SELECT * FROM customers WHERE ({sql_filter})"
         query = text(raw_query)
-        results = db.execute(query, {"owner_id": current_user.id}).fetchall()
+        results = db.execute(query).fetchall()
         
         # Parse SQL Row objects into Pydantic Customer models
         sample_customers = []
@@ -596,9 +595,9 @@ def generate_ai_marketing_command(
     
     # Evaluate targeted audience count under current user scoping
     try:
-        raw_query = f"SELECT COUNT(*) as cnt FROM customers WHERE owner_id = :owner_id AND ({sql_filter})"
+        raw_query = f"SELECT COUNT(*) as cnt FROM customers WHERE ({sql_filter})"
         query = text(raw_query)
-        result = db.execute(query, {"owner_id": current_user.id}).fetchone()
+        result = db.execute(query).fetchone()
         audience_count = result[0] if result else 0
     except Exception as e:
         logger.error(f"Failed to evaluate SQL command filter '{sql_filter}': {e}")

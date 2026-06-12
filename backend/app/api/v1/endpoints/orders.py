@@ -17,17 +17,12 @@ def create_order(
     order_in: schema_order.OrderCreate,
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
-    # Verify the customer exists and belongs to this user
+    # Verify the customer exists
     customer = crud_customer.get_customer(db, customer_id=order_in.customer_id)
     if not customer:
         raise HTTPException(
             status_code=404,
             detail="Customer not found"
-        )
-    if customer.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to place orders for this customer"
         )
     order = crud_customer.create_order(db, order=order_in)
     return order

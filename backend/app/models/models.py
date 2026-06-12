@@ -18,6 +18,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, index=True)
+    role = Column(String, default="MarketingManager", nullable=False)
     is_active = Column(Integer, default=1)
 
     # Relationships

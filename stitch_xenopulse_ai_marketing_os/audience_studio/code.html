@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audience Studio | XenoPulse AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Geist:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #031427;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(16, 32, 52, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .ai-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(192, 193, 255, 0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-glow {
+            box-shadow: 0 0 20px rgba(128, 131, 255, 0.15);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#003824",
+                        "surface-container-high": "#1b2b3f",
+                        "surface-variant": "#26364a",
+                        "surface-tint": "#c0c1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "on-tertiary-container": "#000703",
+                        "surface-dim": "#031427",
+                        "surface": "#031427",
+                        "inverse-surface": "#d3e4fe",
+                        "on-background": "#d3e4fe",
+                        "surface-container-lowest": "#000f21",
+                        "on-secondary-fixed": "#2c0051",
+                        "surface-container-highest": "#26364a",
+                        "primary-fixed": "#e1e0ff",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#6ffbbe",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "secondary": "#ddb7ff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "tertiary-container": "#00885d",
+                        "on-secondary-container": "#d6a9ff",
+                        "on-surface": "#d3e4fe",
+                        "secondary-fixed": "#f0dbff",
+                        "inverse-on-surface": "#213145",
+                        "primary": "#c0c1ff",
+                        "outline-variant": "#464554",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "on-primary-container": "#0d0096",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#0b1c30",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#002113",
+                        "on-primary": "#1000a9",
+                        "on-primary-fixed": "#07006c",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "inverse-primary": "#494bd6",
+                        "on-secondary": "#490080",
+                        "surface-bright": "#2a3a4f",
+                        "primary-container": "#8083ff",
+                        "surface-container": "#102034",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "outline": "#908fa0",
+                        "background": "#031427",
+                        "tertiary": "#4edea3",
+                        "secondary-container": "#6f00be",
+                        "on-primary-fixed-variant": "#2f2ebe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "1.5rem",
+                        "xs": "0.25rem",
+                        "xxl": "4rem",
+                        "md": "1rem",
+                        "base": "4px",
+                        "gutter": "24px",
+                        "sm": "0.5rem",
+                        "container-max": "1440px",
+                        "xl": "2rem"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Geist"],
+                        "mono-sm": ["Geist"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Geist"],
+                        "display-sm": ["Geist"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Geist"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 dark:border-white/10 docked full-width top-0 sticky z-40">
+<div class="flex justify-between items-center px-lg h-16 w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-on-surface">XenoPulse AI</span>
+</div>
+<div class="hidden md:flex gap-8 items-center">
+<nav class="flex gap-6">
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Overview</a>
+<a class="text-primary dark:text-primary-fixed font-bold font-label-md text-label-md px-3 py-2 rounded-lg" href="#">Audiences</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Campaigns</a>
+</nav>
+<div class="h-6 w-[1px] bg-outline-variant/30"></div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</div>
+</div>
+</header>
+<div class="flex min-h-screen">
+<!-- Sidebar Navigation Drawer -->
+<aside class="fixed inset-y-0 left-0 z-50 flex flex-col h-full w-80 bg-surface-container dark:bg-surface-container-low rounded-r-xl shadow-xl hidden md:flex">
+<div class="p-lg flex flex-col gap-6">
+<div class="flex items-center gap-4 px-2">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6Pd1svkUc2uiKA_AoJlqHwDxFpxvtL1cULWr8KofJDyHCccCXRlbNviZ7mIgZVG6sn3-uhkVAt_L79oMpDSWsGjcHu3cwRe9itjpWCbl6lwOZd_zI4zQt9invuAYuqhQD-ye5yG7P2wGq7tcPsthWSXN9b4gGgZ4vRc7rVCjumMlTzeX15Igj-KAPQSQFbfRY1A-LUw0xn6a1r6zJ5PeGoDtmzamv2FjMKcQIpjKw_mViwg7GI2UnSn0AvJGFe2NdqkL5QKfh-Ng"/>
+</div>
+<div>
+<p class="font-headline-md text-headline-md font-bold text-on-surface">Alex Executive</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Marketing Director</p>
+</div>
+</div>
+<div class="mt-4 flex flex-col gap-1">
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="font-label-md text-label-md">AI Command Center</span>
+</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Customers</span>
+</a>
+<a class="bg-primary-container dark:bg-primary-container text-on-primary-container dark:text-on-primary-container rounded-full mx-2 px-4 py-3 flex items-center gap-3 shadow-lg active-glow" href="#">
+<span class="material-symbols-outlined" data-icon="target" style="font-variation-settings: 'FILL' 1;">target</span>
+<span class="font-label-md text-label-md">Audiences</span>
+</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="font-label-md text-label-md">Campaigns</span>
+</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+<span class="font-label-md text-label-md">Live Monitor</span>
+</a>
+<div class="my-4 border-t border-outline-variant/20 mx-4"></div>
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-full flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</div>
+<div class="mt-auto p-lg">
+<div class="p-4 bg-surface-container-high rounded-xl border border-white/5">
+<p class="font-label-sm text-label-sm text-primary mb-1 uppercase tracking-wider">Plan Status</p>
+<p class="font-label-md text-label-md text-on-surface">Enterprise Tier</p>
+<div class="w-full bg-outline-variant/30 h-1.5 rounded-full mt-3">
+<div class="bg-primary h-full w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-80 pb-24 md:pb-8">
+<div class="max-w-6xl mx-auto px-lg py-xl">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-xl gap-4">
+<div>
+<h1 class="font-display-sm text-display-sm text-on-surface mb-2">Audience Studio</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">Harness neural networks to segment your customer base with descriptive prompts and predictive behavioral models.</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        New Segment
+                    </button>
+</div>
+<!-- AI Audience Builder (Prominent Natural Language Input) -->
+<section class="mb-xxl">
+<div class="glass-panel p-lg rounded-3xl relative overflow-hidden active-glow border-primary/20">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="psychology">psychology</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">AI Segment Generator</h2>
+</div>
+<div class="relative">
+<textarea class="w-full bg-surface-container-lowest/50 border border-outline-variant/50 rounded-2xl p-6 pt-10 font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant/40 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none min-h-[160px]" id="ai-input" placeholder="Describe your audience goal..."></textarea>
+<div class="absolute top-4 left-6 flex items-center gap-2 pointer-events-none">
+<span class="text-primary font-label-sm text-label-sm uppercase tracking-widest opacity-80">Prompt Instruction</span>
+</div>
+<div class="absolute bottom-4 right-4 flex items-center gap-3">
+<button class="bg-primary text-on-primary px-8 py-3 rounded-xl font-label-md text-label-md font-bold flex items-center gap-2 hover:brightness-110 shadow-xl transition-all" onclick="simulateGeneration()">
+                                        Analyze Intent
+                                        <span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+</button>
+</div>
+</div>
+<div class="mt-4 flex flex-wrap gap-2 items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Try:</span>
+<button class="bg-surface-variant/50 hover:bg-surface-variant px-3 py-1.5 rounded-lg border border-outline-variant/30 font-label-sm text-label-sm transition-colors" onclick="fillPrompt(this)">"Find customers who spent more than ₹3000 and have not purchased in 60 days."</button>
+<button class="bg-surface-variant/50 hover:bg-surface-variant px-3 py-1.5 rounded-lg border border-outline-variant/30 font-label-sm text-label-sm transition-colors" onclick="fillPrompt(this)">"Users likely to churn in the next 14 days."</button>
+</div>
+</div>
+<!-- Generation Results (Hidden by default, shown on simulate) -->
+<div class="mt-lg pt-lg border-t border-white/5 hidden animate-in fade-in slide-in-from-top-4 duration-700" id="results-panel">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-4 rounded-2xl bg-primary/10 border border-primary/20">
+<p class="font-label-sm text-label-sm text-primary uppercase tracking-widest mb-1">Estimated Reach</p>
+<div class="flex items-baseline gap-2">
+<h3 class="font-display-sm text-display-sm text-on-surface">12,482</h3>
+<span class="font-label-md text-label-md text-tertiary">↑ 8.4%</span>
+</div>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-high">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2">Audience Sample</p>
+<div class="flex -space-x-3">
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-surface shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_iqAlAM7AmpMnzhCnTcj9Ib0x30JZb4S1NK1oxMHPZ0TcXeCfk6iQZ3xYsCMYKVSAnVa3rosJLL1mSMXLprvlW2QJym9ce7mg8ewtli1zbWFpNamzHo0-7wNpbJ29XYhY73EpVsjJDGlmKv-UZkKFq7LGl_8CgQdLsIwVa5wDja9UkkMUL-1FSdELQFVsBWme_lNjcADRgi2h4u7CwTn8SY29OMLjPakXObc_aNaonfPgTOqxjMqEopvfC2-XGvfEFMERk0Nz0-s"/>
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-surface shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuUknTekc9UVFcwpAGiFd8WenoNNfwQHPppdaY3DBjHEFCvTPjOzbjrcngwkd37i7ZcAWrC3G08QWmlWkuYHphXGMCO5QcVLnSKAbYmWv_E2qGAqhn6XuszfcjkQttD5oc_y95nCLFIr95ofW0DYDli34n0LfRXKW4yn4sQKg6Oyi2JybQMWCulmvXnVB_pegpNF7gH8UhZ9o4O5raAnn44gt78SFTXEMrPLLDVF8vgv0BfuSbQPrwsg9VJm8_z7kKPD8eiESTEMg"/>
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-surface shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYZ1Ulv5ZmifKhml4t4jKLTt0sH9QX_RrYdIqWoOmZ-lWTp5ircZmnchD4wcr33DL9FzHlrqI0smCKnM7GknRxepaL0T7KKiDnrQce6wePOck_44nhO8BkSf4HttAGxl4CJ77JM6z-NzaospNKV4BU4vUniZyy3MhOQfgSL1lMazICjwyCj0C9BPxL0nWJmxkwnOsOjV91KB_7PnrZst639or2uwJwHMkakA_7DKHtsC7lvjEiNLdzfmrUZcRnJhDaeeNiK6f8ti4"/>
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-surface shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9A27WYXYQ_PwBbSMwvUtvfYSxgC6Wh5BCTLe-KaGgcLEKaIGkUkMBaaNh_Wh6yCu3AtPmh6wZfBrHUjjNpwSm8vD_-o1QFishcY6ABADqJdSE7uL1evlfGlWu2uAIyevu0Psvo4pjyYypHpFPEdZ3MgZRkjVhNz0GO7AG47sJD0piVYwNKz_BmNg5PfLELbqTJhGyvTDDa6z4oBOdH3qaDhfNJreu8ZgPIDAMAjwCrs1IylEtt1--FCp0w6GdzfKnlcK6xbus5zQ"/>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-variant flex items-center justify-center text-[10px] font-bold">+7.4k</div>
+</div>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-high flex flex-col justify-center">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Confidence Score</span>
+<span class="font-label-sm text-label-sm text-primary">94%</span>
+</div>
+<div class="w-full bg-outline-variant/20 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[94%] transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Prebuilt Audience Cards -->
+<section>
+<div class="flex items-center justify-between mb-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface">Prebuilt Audiences</h2>
+<a class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline" href="#">View All Library</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- VIP Card -->
+<div class="group glass-panel rounded-3xl p-lg flex flex-col hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-2xl bg-tertiary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-tertiary" data-icon="workspace_premium" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="bg-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">High Loyalty</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">VIP Members</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex-1 mb-6">Customers with &gt;₹50,000 annual spend and frequent engagement in last 3 months.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+<div class="flex items-baseline gap-1">
+<span class="font-bold text-lg">2,401</span>
+<span class="text-[10px] text-on-surface-variant">Active</span>
+</div>
+<button class="p-2 hover:bg-primary/20 rounded-full transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- High Spenders Card -->
+<div class="group glass-panel rounded-3xl p-lg flex flex-col hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="bg-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Revenue Focus</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">High Spenders</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex-1 mb-6">Top 5% of customers by Lifetime Value (LTV). Premium category buyers.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+<div class="flex items-baseline gap-1">
+<span class="font-bold text-lg">8,920</span>
+<span class="text-[10px] text-on-surface-variant">Active</span>
+</div>
+<button class="p-2 hover:bg-primary/20 rounded-full transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Frequent Buyers -->
+<div class="group glass-panel rounded-3xl p-lg flex flex-col hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+</div>
+<div class="bg-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Retention</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Frequent Buyers</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex-1 mb-6">Customers with more than 3 purchases in the last 30 days regardless of order value.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+<div class="flex items-baseline gap-1">
+<span class="font-bold text-lg">15,602</span>
+<span class="text-[10px] text-on-surface-variant">Active</span>
+</div>
+<button class="p-2 hover:bg-primary/20 rounded-full transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Lapsed Customers -->
+<div class="group glass-panel rounded-3xl p-lg flex flex-col hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-2xl bg-error/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-error" data-icon="history" style="font-variation-settings: 'FILL' 1;">history</span>
+</div>
+<div class="bg-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-error">Win-Back</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Lapsed Buyers</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex-1 mb-6">Previously active customers who have not made a purchase in over 90 days.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+<div class="flex items-baseline gap-1">
+<span class="font-bold text-lg">34,119</span>
+<span class="text-[10px] text-on-surface-variant">Active</span>
+</div>
+<button class="p-2 hover:bg-primary/20 rounded-full transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Add Custom Card -->
+<div class="group border-2 border-dashed border-outline-variant/30 rounded-3xl p-lg flex flex-col items-center justify-center gap-4 hover:border-primary/50 transition-all cursor-pointer min-h-[220px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/30 group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="add">add</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">Create Custom Logic</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Bottom Mobile Nav -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-surface/90 dark:bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 dark:border-white/10 md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container/20 text-primary dark:text-primary-fixed-dim rounded-xl p-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="target" style="font-variation-settings: 'FILL' 1;">target</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<script>
+        function fillPrompt(btn) {
+            const textarea = document.getElementById('ai-input');
+            textarea.value = btn.innerText.replace(/"/g, '');
+            textarea.focus();
+        }
+
+        function simulateGeneration() {
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            const results = document.getElementById('results-panel');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin material-symbols-outlined" data-icon="progress_activity">progress_activity</span> Processing...`;
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                results.classList.remove('hidden');
+                results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 1800);
+        }
+
+        // Horizontal card hover effect
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>
