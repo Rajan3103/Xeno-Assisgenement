@@ -97,8 +97,4 @@ cd backend
 python test_api.py
 ```
 
----
-
-## Render Production Deployment
-The backend configuration is prepared for Render with persistent disk storage for SQLite database safety. See [deploy_steps.md](deploy_steps.md) for step-by-step instructions.
 
