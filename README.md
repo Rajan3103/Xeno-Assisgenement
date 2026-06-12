@@ -1,100 +1,152 @@
-# XenoPulse AI - Marketing Automation & CRM Command Center
+# XenoPulse ⚡
+### AI-Native Marketing Operating System for Enterprise Retail Brands
 
-XenoPulse AI is a premium, state-of-the-art marketing automation and CRM platform designed for DTC e-commerce brands. By integrating Google Gemini 2.5 Flash models, the system dynamically translates natural language prompts into precise SQL segment filters, crafts conversion-optimized campaign copy, generates analytical insights, and runs an automated campaign outreach pipeline across Email, SMS, and WhatsApp.
-
----
-
-## Key Features
-
-1. **AI Marketing Command Center**: Translate simple prompts (e.g. *"Increase repeat purchases among premium shoppers"*) into fully realized marketing segment filters, marketing channels, and optimized copy copies, with a step-by-step approval view.
-2. **AI Segment Generator**: Query customer cohorts in natural language. Gemini translates the description into SQLite WHERE clauses and evaluates the reach size live.
-3. **AI Copywriting & Outreach Preview**: Instant draft copywriting optimized for specific audience segments with live mobile phone mocks for Email, SMS, and WhatsApp modes.
-4. **Recharts Analytics Dashboard**: Real-time visualization of campaigns performance, delivery/open/click rates, and live status change updates via polling.
-5. **FastAPI Channel Service & Callback Engine**: Fully isolated microservice dispatching message payloads and simulating delivery events (Opened, Read, Clicked) with transactional safety, retries, and duplicate idempotency checks.
-6. **Fashion B2C Seeder**: Includes realistic DTC e-commerce dataset (1,000 customers, 5,000 orders) generated using loyalty power-law curves and seasonal shopping weights.
+XenoPulse is a high-performance, production-ready marketing operating system designed for modern retail organizations. The platform enables marketing teams to switch between active brand workspaces, generate data-driven campaigns from natural language using the Gemini API, parse customer segments semantically, run real-time message dispatch simulators, and monitor growth metrics instantly.
 
 ---
 
-## UI Previews
+## 🏗️ System Architecture
 
-### 1. Brand Home Page
-![XenoPulse Landing Page](docs/images/landing.png)
-
-### 2. AI Marketing Command Center
-![AI Command Center](docs/images/command.png)
-
-### 3. Real-time Recharts Analytics Dashboard
-![Analytics Dashboard](docs/images/analytics.png)
-
-### 4. Segment Builder & AI SQL Generator
-![Segment Builder](docs/images/segments.png)
-
-### 5. Campaign Outreach Panel
-![Campaign Builder](docs/images/campaigns.png)
-
----
-
-## Project Architecture & Tech Stack
+XenoPulse is architected as a fully decoupled monorepo split into an independent static frontend, a stateless Python/FastAPI backend, and a dedicated message dispatch microservice:
 
 ```mermaid
 graph TD
-    A[Vite React SPA Client] -->|HTTP / JSON Proxy| B[FastAPI CRM Backend :8000]
-    B -->|Fetch / Filter| C[(SQLite Database)]
-    B -->|HTTP Send Request| D[FastAPI Channel Service :8001]
-    D -->|Simulate Send| E[Recipient Devices]
-    E -->|Status Callback POST /api/receipts| B
-    B -.->|AI Analysis| F[Gemini 2.5 API]
-```
+    subgraph Client ["Frontend Client"]
+        UI["React 19 SPA (Vite + Tailwind CSS v4)"]
+        MockSocket["Mock Socket.io (Client-Side Simulation)"]
+    end
 
-### Stack Components
-* **Frontend**: React 19 with Vite SPA (TypeScript, Vanilla CSS, Lucide Icons, Recharts, client-side WebSocket/Socket.io mock simulation).
-* **Backend**: FastAPI (Python 3, SQLAlchemy, Pydantic v2, Pydantic Settings, JWT Auth).
-* **Channel Microservice**: FastAPI (Python 3, SMTP/SMTP stubs, Twilio SDK stubs).
-* **Database**: SQLite with PRAGMA foreign keys enabled.
-* **AI Integration**: Gemini 2.5 Flash via REST endpoints.
+    subgraph Server ["Backend Server"]
+        FastAPI["FastAPI Python Server (Port 8000)"]
+    end
+
+    subgraph Channel ["Channel Microservice"]
+        ChannelService["FastAPI Channel Service (Port 8001)"]
+    end
+
+    subgraph Storage ["Services & Storage"]
+        SQLite[("SQLite Database")]
+        SQLAlchemy["SQLAlchemy ORM"]
+        Gemini["Gemini AI (gemini-2.5-flash via REST)"]
+    end
+
+    UI -->|API Requests / Proxy| FastAPI
+    FastAPI --> SQLite
+    FastAPI -->|HTTP Send Request| ChannelService
+    ChannelService -->|Status Callback POST /api/receipts| FastAPI
+    FastAPI -.->|AI Analysis| Gemini
+```
 
 ---
 
-## Instructions to Run Locally
+## ⚡ Core Capabilities & Features
 
-### 1. Run CRM Backend (Port 8000)
+### 🏢 Brand Tenancy Configuration
+* **Database-Level Partitioning**: Multi-tenant database model isolating customer records, orders, and campaigns.
+* **Shared Pool Tenancy**: Shared database schema where Admins and Managers have contextual role-based control panels to provision users and view campaigns.
+
+### 🧠 AI Command Center & Semantic Segment Builder
+* **Dynamic Database Context Feeding**: Scans the database to query target segment size and passes active cohort counts to Gemini. This allows the AI model to recommend high-impact message templates and predict click-through rates.
+* **Natural Language Queries**: Uses Gemini to parse conversational inputs (e.g., *"Chennai VIP customers who spent more than 50,000 rupees and have been inactive for 45 days"*) into structured query filters.
+
+### 🔄 Real-time Campaign Simulator Loop & Controls
+* **Decoupled Async Processing**: Launching a campaign initiates background tasks that simulate recipient message delivery lifecycles (`SENT` -> `DELIVERED` -> `READ` -> `CLICKED` -> `CONVERTED`).
+* **Simulation Controls**: Play/Pause controls and speed multipliers (`1x`, `2x`, `5x`, `10x`) allow adjusting the live ticker rate or halting execution in-flight.
+* **Callback Receipts**: Integrates callback endpoints (`/api/receipts`) to log delivery events, update stats, and broadcast live telemetry to the browser via the simulated socket.
+* **Dynamic Database Side-Effects**: Simulated conversions dynamically feed order histories, instantly recalculating customer metrics in real-time.
+
+### 📱 Interactive Multi-Channel Campaign Previewer
+* **Device Mockup Skins**: Smartphone skin rendering changes contextually based on the chosen marketing channel (WhatsApp chat thread UI, SMS message card, RCS media card with suggested reply action chips, or styled Email details template).
+* **Real-time Personalization Parsing**: Dynamically replaces template parameters such as `{first_name}` with realistic dummy data (`Alex`) on keypress events.
+
+### 📊 Historical Campaign Performance & AI Churn Alerts
+* **AI Insights Engine**: Scanning client records for drop-off risks with health scores below 50. A "Rescue" button triggers redirection to the Campaign Studio and preloads recovery templates for the target user instantly.
+* **Recharts Dashboard**: Real-time visualization of campaigns performance, delivery/open/click rates, and live status change updates.
+
+### 🛡️ Role-Based Access Control (RBAC)
+* **JWT Token Verification**: Restricts administrative capabilities (such as customer profile deletion/pruning) using RBAC. Attempts by managers to invoke deletion API endpoints are rejected on the backend (`403 Forbidden`) and blocked on the client.
+
+---
+
+## 🛠️ Technology Stack
+
+| Component | Version | Description |
+| :--- | :--- | :--- |
+| **Frontend Framework** | React `19.0.1` | High-performance client SPA |
+| **Build Tool** | Vite `6.2.3` | Lightning-fast frontend tooling |
+| **Styling** | Tailwind CSS `4.1.14` | Utility-first CSS framework |
+| **Charts** | Recharts `3.8.1` | Vibrant interactive dashboards |
+| **UI Icons** | Lucide React `0.546.0` | Clean icon system |
+| **Animations** | Motion `12.23.24` | Smooth micro-animations |
+| **WebSockets (Client)** | Socket.io-client `4.8.3` | Custom MockSocket real-time event simulation |
+| **Backend Runtime** | Python `3.10+` | High-performance async backend |
+| **API Framework** | FastAPI `≥0.110.0` + Uvicorn `≥0.28.0` | REST API & ASGI server |
+| **ORM** | SQLAlchemy `≥2.0.0` | Database modeling and queries |
+| **AI Integration** | Gemini API | Gemini 2.5 Flash NLP & insights |
+| **Auth** | python-jose `≥3.3.0` + passlib[bcrypt] `≥1.7.4` | JWT sessions and password hashing |
+| **Validation** | Pydantic `≥2.0.0` + pydantic-settings `≥2.0.0` | Request/response schema enforcement |
+
+---
+
+## 📂 Project Structure
+
+The repository is organized into independent folder workspaces:
+* [**`frontend/`**](file:///e:/Xeno-Assisgenement/frontend): Standalone client-side application (React 19 + Vite + Tailwind CSS v4).
+* [**`backend/`**](file:///e:/Xeno-Assisgenement/backend): FastAPI backend server with SQLAlchemy ORM and SQLite.
+* [**`channel-service/`**](file:///e:/Xeno-Assisgenement/channel-service): FastAPI message delivery and receipt callbacks simulator.
+
+---
+
+## 🚀 Local Development Quickstart
+
+### 1. Prerequisites
+Ensure you have **Node.js** (v18+) and **Python** (v3.10+).
+
+### 2. Configure Environment Variables
+Create a `.env` file in the `backend/` directory:
+```env
+DATABASE_URL="sqlite:///./sql_app.db"
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+SECRET_KEY="xenopulse_super_secret_jwt_key_2026"
+```
+
+### 3. Setup Backend & Seed Database
 ```bash
 cd backend
 python -m venv venv
-# Activate virtual environment:
-# Windows: .\venv\Scripts\activate
-# macOS/Linux: source venv/bin/activate
+# Activate virtual environment (Windows):
+.\venv\Scripts\activate
+# Activate virtual environment (macOS/Linux):
+source venv/bin/activate
+
 pip install -r requirements.txt
 python -m app.seed # Seeds 1000 customers & 5000 orders
-$env:PYTHONPATH="." # Windows Powershell
 python -m uvicorn app.main:app --port 8000
 ```
 API docs will be live at `http://localhost:8000/docs`.
 
-### 2. Run Channel Service (Port 8001)
+### 4. Setup Channel Service
 ```bash
 cd channel-service
 python -m venv venv
-# Activate virtual environment
+# Activate virtual environment (Windows):
+.\venv\Scripts\activate
+
 pip install -r requirements.txt
-$env:PYTHONPATH="."
 python -m uvicorn app.main:app --port 8001
 ```
-Service will be live at `http://localhost:8001`.
 
-### 3. Run Frontend (Port 5173)
+### 5. Setup Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open your browser at `http://localhost:5173`.
+Open **`http://localhost:5173`** to access the dashboard!
 
-### 4. Run Verification Tests
-To verify all end-to-end integration API checks, auth tokens, database updates, retries, and callback loops:
-```bash
-cd backend
-python test_api.py
-```
+---
 
-
+## 🔐 Prefilled Test Credentials
+On the Login screen, click either prefill profile button:
+* **Admin**: `admin@xenopulse.com` / `admin123` or `admin@xenopulse.ai` / `admin123` (Full pruning permissions)
+* **Manager**: `manager@xenopulse.com` / `manager123` (Operational access; customer deletions blocked)
