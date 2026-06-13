@@ -46,6 +46,27 @@ graph TD
 
 ---
 
+## 📷 Project User Interface Gallery
+
+Here are the key interfaces developed for the XenoPulse Marketing OS platform:
+
+### ⚡ Client Dashboard & Active System Status
+![Client Dashboard & Active System Status](docs/images/landing.png)
+
+### 🧠 AI Command Center Segment Builder
+![AI Command Center](docs/images/command.png)
+
+### 📊 Customer Intelligence & Transaction Analytics
+![Customer Intelligence](docs/images/analytics.png)
+
+### 🚀 Campaign Studio & Outreach Dispatcher
+![Campaign Studio](docs/images/campaigns.png)
+
+### 🎯 Audience Segment Planner
+![Audience Segment Planner](docs/images/segments.png)
+
+---
+
 ## ⚡ Core Capabilities & Features
 
 ### 🏢 Brand Tenancy Configuration
@@ -153,7 +174,10 @@ Open **`http://localhost:5173`** to access the dashboard!
 
 ---
 
-## 🔐 Prefilled Test Credentials
-On the Login screen, click either prefill profile button:
-* **Admin**: `admin@xenopulse.com` / `admin123` or `admin@xenopulse.ai` / `admin123` (Full pruning permissions)
-* **Manager**: `manager@xenopulse.com` / `manager123` (Operational access; customer deletions blocked)
+## 🔐 Authentication & Quick Switching
+
+Although the frontend is configured to bypass the credentials gate and load directly into the workspace, you can quick-switch roles contextually using the Header dropdown or the Sidebar toggle button.
+
+For API testing (`test_api.py`) or database direct access, the prefilled test credentials remain fully active:
+* **Admin**: `admin@xenopulse.com` / `admin123` or `admin@xenopulse.ai` / `admin123` (Full administrative rights)
+* **Manager**: `manager@xenopulse.com` / `manager123` (Standard manager role)
