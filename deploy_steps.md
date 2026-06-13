@@ -108,3 +108,39 @@ Vercel is the recommended hosting platform for static client SPAs.
 6. Click **"Deploy"** and wait for Vercel to generate your static build.
 7. Access your dashboard at the generated Vercel domain!
 
+---
+
+## Step 5: Backend Deployment Alternatives (Railway & Koyeb)
+
+If you prefer to deploy the FastAPI backend on platforms other than Render, here are two excellent alternatives offering free developer tier credits:
+
+### Option A: Deploying to Railway (Recommended for SQLite Persistence)
+Railway is highly recommended for SQLite databases because **Railway supports mounting persistent volumes on its developer tier plans**, keeping database files safe across deployments.
+
+1. Log in to [Railway](https://railway.app).
+2. Click **"New Project"** and select **"Deploy from GitHub repo"**.
+3. Select your repository.
+4. Go to the service **"Variables"** tab and configure:
+   * **`GEMINI_API_KEY`**: Your Google Gemini developer API Key.
+   * **`SECRET_KEY`**: Any secret string.
+   * **`DATABASE_URL`**: `sqlite:///./sql_app.db` (Or `sqlite:////data/sql_app.db` if using a persistent volume).
+   * **`PYTHONPATH`**: `.`
+5. Go to the **"Settings"** tab:
+   * **Root Directory**: Set to `backend`
+   * **Build Command**: Set to `pip install -r requirements.txt`
+   * **Start Command**: Set to `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+6. *(Optional: Persistent Volume setup)*: Under the service's **"Volume"** tab, click **"Add Volume"** to attach a persistent volume (mount directory `/data`). This preserves the database between container restarts.
+
+### Option B: Deploying to Koyeb (Fast Serverless Runtime)
+Koyeb provides one free Web Service instance with 512MB RAM running 24/7.
+
+1. Sign up on [Koyeb](https://www.koyeb.com).
+2. Click **"Create Service"** and select **"GitHub"**.
+3. Select your repository.
+4. Configure the service parameters:
+   * **Root Directory**: `backend`
+   * **Builder**: Buildpack
+   * **Run Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
+5. Set Environment Variables:
+   * Add `GEMINI_API_KEY`, `SECRET_KEY`, `DATABASE_URL` (`sqlite:///./sql_app.db`), and `PYTHONPATH` (`.`).
+6. Click **"Deploy"** to start building.
