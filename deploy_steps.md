@@ -114,8 +114,8 @@ Vercel is the recommended hosting platform for static client SPAs.
 
 If you prefer to deploy the FastAPI backend on platforms other than Render, here are two excellent alternatives offering free developer tier credits:
 
-### Option A: Deploying to Railway (Recommended for SQLite Persistence)
-Railway is highly recommended for SQLite databases because **Railway supports mounting persistent volumes on its developer tier plans**, keeping database files safe across deployments.
+### Option A: Deploying to Railway (Recommended)
+Railway is highly recommended for backend hosting. For database storage, you can use SQLite or connect directly to a remote **PostgreSQL Database** (such as a Render Managed PostgreSQL instance).
 
 1. Log in to [Railway](https://railway.app).
 2. Click **"New Project"** and select **"Deploy from GitHub repo"**.
@@ -123,13 +123,15 @@ Railway is highly recommended for SQLite databases because **Railway supports mo
 4. Go to the service **"Variables"** tab and configure:
    * **`GEMINI_API_KEY`**: Your Google Gemini developer API Key.
    * **`SECRET_KEY`**: Any secret string.
-   * **`DATABASE_URL`**: `sqlite:///./sql_app.db` (Or `sqlite:////data/sql_app.db` if using a persistent volume).
+   * **`DATABASE_URL`**: Your PostgreSQL Connection String (e.g. `postgresql://<user>:<password>@<host>/<database>?sslmode=require` or the Render external Postgres URL). The backend will automatically map standard `postgres://` protocols to SQLAlchemy-compatible `postgresql://`.
    * **`PYTHONPATH`**: `.`
 5. Go to the **"Settings"** tab:
    * **Root Directory**: Set to `backend`
    * **Build Command**: Set to `pip install -r requirements.txt`
-   * **Start Command**: Set to `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. *(Optional: Persistent Volume setup)*: Under the service's **"Volume"** tab, click **"Add Volume"** to attach a persistent volume (mount directory `/data`). This preserves the database between container restarts.
+   * **Start Command**: Set to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   * *Note*: Specifying `--port $PORT` is critical. If your app defaults to port `8080` and ignores Railway's assigned dynamic port, the deployment container health check will fail and Railway will stop the container.
+6. *(Optional: Persistent SQLite Volume setup)*: If you use SQLite (`sqlite:////data/sql_app.db`) instead of PostgreSQL, go to the service's **"Volume"** tab, click **"Add Volume"** to attach a persistent volume (mount directory `/data`). This preserves the database between restarts.
+
 
 ### Option B: Deploying to Koyeb (Fast Serverless Runtime)
 Koyeb provides one free Web Service instance with 512MB RAM running 24/7.

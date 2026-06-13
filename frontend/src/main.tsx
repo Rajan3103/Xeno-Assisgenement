@@ -71,8 +71,14 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       });
 
       if (!res.ok) {
-        return new Response(JSON.stringify({ success: false, error: "Invalid credentials" }), {
-          status: 401,
+        let errorMsg = "Invalid credentials. Please try again.";
+        if (res.status >= 500) {
+          errorMsg = `Backend server error (${res.status}). Please verify your backend service logs and database connection.`;
+        } else if (res.status === 404) {
+          errorMsg = "Login endpoint not found (404). Check backend configuration.";
+        }
+        return new Response(JSON.stringify({ success: false, error: errorMsg }), {
+          status: res.status,
           headers: { "Content-Type": "application/json" },
         });
       }

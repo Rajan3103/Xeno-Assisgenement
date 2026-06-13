@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Fallback presets to guarantee functionality in development when no API Key is set
 FALLBACK_PRESETS = {
-    "spent": "id IN (SELECT customer_id FROM orders WHERE status = 'Completed' GROUP BY customer_id HAVING SUM(total_amount) > 62.5)",
+    "spent": "id IN (SELECT customer_id FROM orders WHERE status = 'Completed' GROUP BY customer_id HAVING SUM(amount) > 62.5)",
     "customer": "status = 'Customer'",
     "lead": "status = 'Lead'",
     "inactive": "status = 'Inactive'"
@@ -537,7 +537,7 @@ FALLBACK_COMMAND_BLUEPRINTS = [
         "keywords": ["premium", "vip", "loyal", "repeat", "spend"],
         "blueprint": {
             "segment_name": "Premium Repeat Shoppers",
-            "sql_filter": "id IN (SELECT customer_id FROM orders WHERE status = 'Completed' GROUP BY customer_id HAVING SUM(total_amount) > 62.5)",
+            "sql_filter": "id IN (SELECT customer_id FROM orders WHERE status = 'Completed' GROUP BY customer_id HAVING SUM(amount) > 62.5)",
             "campaign_name": "VIP Loyalty Appreciation Reward",
             "channel": "Email",
             "campaign_message": "Hi! As a valued premium shopper, thank you for choosing XenoPulse. Use VIP20 to enjoy an extra 20% off our exclusive new arrivals.",
