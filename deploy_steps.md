@@ -104,7 +104,7 @@ Vercel is the recommended hosting platform for static client SPAs.
 5. Configure Environment Variables:
    * Add a new environment variable:
      * **Key**: `NEXT_PUBLIC_API_URL`
-     * **Value**: Your Render FastAPI backend service URL (e.g. `https://xenopulse-crm-backend.onrender.com`).
+     * **Value**: `https://xenopulse-crm-backend-production.up.railway.app`
 6. Click **"Deploy"** and wait for Vercel to generate your static build.
 7. Access your dashboard at the generated Vercel domain!
 
