@@ -15,27 +15,27 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
+from fastapi import Request
+
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+    request: Request,
+    db: Session = Depends(get_db)
 ) -> schema_auth.User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+    from app.models.models import User as DBUser
+    role = request.headers.get("x-role", "Admin")
+    if role.lower() == "admin":
+        role = "Admin"
+    else:
+        role = "MarketingManager"
+        
+    user = DBUser(
+        id=1 if role == "Admin" else 2,
+        email="admin@xenopulse.com" if role == "Admin" else "manager@xenopulse.com",
+        hashed_password="mock",
+        full_name="Alex Executive" if role == "Admin" else "Jane Manager",
+        role=role,
+        is_active=1
     )
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-        token_data = schema_auth.TokenData(id=int(user_id))
-    except (JWTError, ValueError):
-        raise credentials_exception
-    user = crud_customer.get_user(db, user_id=token_data.id)
-    if user is None:
-        raise credentials_exception
     return user
 
 @router.post("/register", response_model=schema_auth.User)

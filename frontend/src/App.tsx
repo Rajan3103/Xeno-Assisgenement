@@ -74,7 +74,10 @@ interface CampaignStatus {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"command" | "customers" | "audience" | "campaign" | "live" | "insights" | "settings">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "customers" | "audience" | "campaign" | "live" | "insights" | "settings">(() => {
+    const savedRole = localStorage.getItem("xp_role") || "Admin";
+    return savedRole === "Admin" ? "insights" : "command";
+  });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [liveLogs, setLiveLogs] = useState<LiveEvent[]>([]);
   const [activeCampaignStatus, setActiveCampaignStatus] = useState<CampaignStatus | null>(null);
@@ -82,8 +85,15 @@ export default function App() {
   const [activeCampaignSize, setActiveCampaignSize] = useState(1000);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [systemAlert, setSystemAlert] = useState<string | null>(null);
-  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(() => {
+    const savedRole = localStorage.getItem("xp_role") || "Admin";
+    if (savedRole === "Admin") {
+      return { name: "Alex Executive", email: "admin@xenopulse.com", role: "Admin" };
+    } else {
+      return { name: "Jane Manager", email: "manager@xenopulse.com", role: "MarketingManager" };
+    }
+  });
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Pagination and optimized state variables
   const [totalCustomers, setTotalCustomers] = useState(0);
@@ -128,32 +138,7 @@ export default function App() {
   };
 
   const checkSession = async () => {
-    try {
-      const res = await fetch("/api/auth/session");
-      const d = await res.json();
-      if (d.success && d.user) {
-        setUser(d.user);
-        setActiveTab(d.user.role === "Admin" ? "insights" : "command");
-      } else {
-        // Automatically attempt silent login with default admin credentials
-        const loginRes = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: "admin@xenopulse.com", password: "admin123" })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.success && loginData.user) {
-          setUser(loginData.user);
-          setActiveTab(loginData.user.role === "Admin" ? "insights" : "command");
-        } else {
-          setUser(null);
-        }
-      }
-    } catch (e) {
-      console.error("Auth session check failed", e);
-    } finally {
-      setAuthLoading(false);
-    }
+    setAuthLoading(false);
   };
 
   const handleLogout = async () => {
@@ -530,15 +515,33 @@ export default function App() {
           </div>
         </div>
 
-        {/* Global summary badge states */}
-        <div className="hidden sm:flex items-center gap-6 text-xs text-zinc-400 font-mono">
-          <div className="flex items-center gap-1.5 text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>LIVE SIMULATOR ACTIVE</span>
+        {/* Global summary badge states & role switcher */}
+        <div className="flex items-center gap-4 text-xs font-mono">
+          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 p-1.5 rounded-lg">
+            <span className="text-[10px] uppercase font-mono px-1 text-zinc-500">Role:</span>
+            <select
+              value={user?.role}
+              onChange={(e) => {
+                const newRole = e.target.value;
+                localStorage.setItem("xp_role", newRole);
+                window.location.reload();
+              }}
+              className="bg-[#09090b] text-xs font-semibold text-zinc-200 border border-zinc-850 px-2.5 py-0.5 rounded cursor-pointer focus:outline-none focus:border-indigo-500"
+            >
+              <option value="Admin">Admin</option>
+              <option value="MarketingManager">Marketing Manager</option>
+            </select>
           </div>
-          <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
-            <Cpu size={12} className="text-indigo-400" />
-            <span>Chennai Core Workspace</span>
+          
+          <div className="hidden sm:flex items-center gap-6 text-zinc-400">
+            <div className="flex items-center gap-1.5 text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>LIVE SIMULATOR ACTIVE</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
+              <Cpu size={12} className="text-indigo-400" />
+              <span>Chennai Core Workspace</span>
+            </div>
           </div>
         </div>
       </header>
@@ -557,10 +560,14 @@ export default function App() {
               </div>
             </div>
             <button
-              onClick={handleLogout}
-              className="w-full py-1 text-center bg-zinc-950 hover:bg-zinc-800 border border-zinc-850 hover:text-white rounded text-[9px] font-mono text-zinc-400 transition-colors cursor-pointer"
+              onClick={() => {
+                const nextRole = user?.role === "Admin" ? "MarketingManager" : "Admin";
+                localStorage.setItem("xp_role", nextRole);
+                window.location.reload();
+              }}
+              className="w-full py-1.5 text-center bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/30 text-indigo-400 hover:text-white rounded text-[9px] font-mono font-bold tracking-wider transition-colors cursor-pointer"
             >
-              LOGOUT SESSION
+              SWITCH TO {user?.role === "Admin" ? "MARKETING MANAGER" : "ADMIN"}
             </button>
           </div>
 

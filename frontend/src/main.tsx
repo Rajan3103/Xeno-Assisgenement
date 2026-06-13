@@ -44,10 +44,12 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   // Helper to get headers with Auth token
   const getHeaders = (extra: Record<string, string> = {}) => {
     const token = localStorage.getItem("xp_token");
+    const role = localStorage.getItem("xp_role") || "Admin";
     const headers = new Headers(init?.headers || {});
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
+    headers.set("x-role", role);
     Object.entries(extra).forEach(([k, v]) => headers.set(k, v));
     return headers;
   };
