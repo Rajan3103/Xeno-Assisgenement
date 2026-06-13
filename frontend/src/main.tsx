@@ -110,6 +110,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         companyId: "chennai",
       };
 
+      localStorage.setItem("xp_role", user.role);
+
       return new Response(JSON.stringify({ success: true, user }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -156,6 +158,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         companyId: "chennai",
       };
 
+      localStorage.setItem("xp_role", user.role);
+
       return new Response(JSON.stringify({ success: true, user }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -171,6 +175,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   // 3. Intercept Logout
   if (url === "/api/auth/logout" && init?.method === "POST") {
     localStorage.removeItem("xp_token");
+    localStorage.removeItem("xp_role");
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
