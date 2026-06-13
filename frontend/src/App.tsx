@@ -135,7 +135,19 @@ export default function App() {
         setUser(d.user);
         setActiveTab(d.user.role === "Admin" ? "insights" : "command");
       } else {
-        setUser(null);
+        // Automatically attempt silent login with default admin credentials
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "admin@xenopulse.com", password: "admin123" })
+        });
+        const loginData = await loginRes.json();
+        if (loginData.success && loginData.user) {
+          setUser(loginData.user);
+          setActiveTab(loginData.user.role === "Admin" ? "insights" : "command");
+        } else {
+          setUser(null);
+        }
       }
     } catch (e) {
       console.error("Auth session check failed", e);
