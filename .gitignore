@@ -40,3 +40,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary Reference
+xenoflow_temp/
+

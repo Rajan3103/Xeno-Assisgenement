@@ -248,20 +248,19 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const data = await res.json();
       if (Array.isArray(data)) {
         const mappedCustomers = data.map((c: any) => {
-          const idNum = parseInt(c.id) || 1;
-          const healthScore = 50 + (idNum % 51); // 50 to 100
-          const ltv = 500 + (idNum % 4500); // 500 to 5000
-          const tags = c.status === "Inactive" ? ["Inactive"] : c.status === "Lead" ? ["New"] : ["Customer"];
+          const tags = c.tags ? c.tags.split(",") : [c.status === "Inactive" ? "Inactive" : c.status === "Lead" ? "New" : "Customer"];
+          const healthScore = c.rfm_recency ? (c.rfm_recency * 12) + ((c.rfm_frequency || 1) * 8) : 80;
+          const ltv = c.total_spent !== undefined ? c.total_spent : 0;
           return {
             id: String(c.id),
             name: c.name,
             email: c.email,
             phone: c.phone,
-            city: "Chennai",
+            city: c.city || "Chennai",
             ltv: ltv,
             healthScore: healthScore,
             tags: tags,
-            lastActivityAt: c.created_at || new Date().toISOString(),
+            lastActivityAt: c.last_order_date || c.created_at || new Date().toISOString(),
             createdAt: c.created_at || new Date().toISOString(),
             purchaseHistory: [],
             campaignTimeline: [],
@@ -291,23 +290,22 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       // Single customer details response
       if (data && data.id) {
         const c = data;
-        const idNum = parseInt(c.id) || 1;
-        const healthScore = 50 + (idNum % 51);
-        const ltv = 500 + (idNum % 4500);
-        const tags = c.status === "Inactive" ? ["Inactive"] : c.company ? [c.company] : [];
+        const tags = c.tags ? c.tags.split(",") : [c.status === "Inactive" ? "Inactive" : c.company ? c.company : "Customer"];
+        const healthScore = c.rfm_recency ? (c.rfm_recency * 12) + ((c.rfm_frequency || 1) * 8) : 80;
+        const ltv = c.total_spent !== undefined ? c.total_spent : 0;
         const mappedCustomer = {
           id: String(c.id),
           name: c.name,
           email: c.email,
           phone: c.phone,
-          city: "Chennai",
+          city: c.city || "Chennai",
           ltv: ltv,
           healthScore: healthScore,
           tags: tags,
-          lastActivityAt: c.created_at || new Date().toISOString(),
+          lastActivityAt: c.last_order_date || c.created_at || new Date().toISOString(),
           createdAt: c.created_at || new Date().toISOString(),
           purchaseHistory: [
-            { id: "o-1", items: c.company || "Retail Purchase", totalValue: ltv, date: new Date().toISOString() }
+            { id: "o-1", items: c.company || "Fashion Purchase", totalValue: ltv, date: c.last_order_date || new Date().toISOString() }
           ],
           campaignTimeline: [],
         };

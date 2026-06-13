@@ -37,17 +37,14 @@ def call_gemini_api(prompt: str) -> str:
     system_instruction = (
         "You are a SQL database expert. You convert natural language descriptions of customer segments into SQLite WHERE clauses.\n\n"
         "The database has the following tables:\n"
-        "- users: id (INT), email (TEXT), is_active (INT)\n"
-        "- customers: id (INT), name (TEXT), email (TEXT), phone (TEXT), company (TEXT), status (TEXT), created_at (DATETIME), owner_id (INT)\n"
-        "- orders: id (INT), customer_id (INT), order_date (DATETIME), total_amount (FLOAT), status (TEXT)\n"
-        "- campaigns: id (INT), name (TEXT), status (TEXT), type (TEXT), created_at (DATETIME)\n"
-        "- communications: id (INT), customer_id (INT), campaign_id (INT), type (TEXT), status (TEXT), sent_at (DATETIME)\n"
-        "- segments: id (INT), name (TEXT), description (TEXT), created_at (DATETIME)\n\n"
+        "- customers: id (TEXT), name (TEXT), email (TEXT), phone (TEXT), status (TEXT), city (TEXT), state (TEXT), total_spent (REAL), order_count (INTEGER), avg_order_value (REAL), tags (TEXT), signup_date (TEXT), created_at (TEXT)\n"
+        "- orders: id (TEXT), customer_id (TEXT), product_name (TEXT), category (TEXT), amount (REAL), order_date (TEXT), status (TEXT)\n\n"
         "Rules:\n"
         "1. Output ONLY a valid JSON object matching the requested schema. Do not explain anything.\n"
-        "2. The sql_filter field must contain a SQL condition that fits in: SELECT * FROM customers WHERE owner_id = X AND (sql_filter)\n"
-        "3. If query checks order totals (like 'spent above ₹5000 last month' or 'orders above $1000'), assume total_amount is in USD. For INR conversion, use 80 INR = 1 USD (so ₹5000 is $62.50). Match customer completing orders with total amount > 62.50.\n"
-        "4. If query checks order count or time metrics, use standard SQLite date functions like datetime('now', '-30 days')."
+        "2. The sql_filter field must contain a SQL condition that fits in: SELECT * FROM customers WHERE (sql_filter)\n"
+        "3. You can query customer metrics directly on the customers table (e.g., total_spent > 1000, order_count > 3, tags LIKE '%vip%', city = 'Delhi').\n"
+        "4. If query checks order totals (like 'spent above ₹5000' or 'spent above $62.50'), assume amount/total_spent is in USD. For INR conversion, use 80 INR = 1 USD (so ₹5000 is $62.50).\n"
+        "5. If query checks dates or time metrics, use standard SQLite date functions like datetime('now', '-30 days')."
     )
 
     payload = {
@@ -143,6 +140,17 @@ def generate_ai_segment(
                     phone=row.phone,
                     company=row.company,
                     status=row.status,
+                    city=getattr(row, "city", None),
+                    state=getattr(row, "state", None),
+                    total_spent=getattr(row, "total_spent", 0.0),
+                    order_count=getattr(row, "order_count", 0),
+                    avg_order_value=getattr(row, "avg_order_value", 0.0),
+                    last_order_date=getattr(row, "last_order_date", None),
+                    first_order_date=getattr(row, "first_order_date", None),
+                    rfm_recency=getattr(row, "rfm_recency", None),
+                    rfm_frequency=getattr(row, "rfm_frequency", None),
+                    rfm_monetary=getattr(row, "rfm_monetary", None),
+                    tags=getattr(row, "tags", None),
                     created_at=row.created_at,
                     owner_id=row.owner_id
                 )
@@ -446,12 +454,12 @@ def call_gemini_command_api(prompt: str) -> dict:
     system_instruction = (
         "You are an expert marketing automation and database architect. You translate high-level marketing goals into campaign blueprints.\n\n"
         "The customer database has these tables:\n"
-        "- customers: id (INT), name (TEXT), email (TEXT), phone (TEXT), status (TEXT), owner_id (INT)\n"
-        "- orders: id (INT), customer_id (INT), order_date (DATETIME), total_amount (FLOAT), status (TEXT)\n\n"
+        "- customers: id (TEXT), name (TEXT), email (TEXT), phone (TEXT), status (TEXT), city (TEXT), state (TEXT), total_spent (REAL), order_count (INTEGER), avg_order_value (REAL), tags (TEXT), signup_date (TEXT), created_at (TEXT)\n"
+        "- orders: id (TEXT), customer_id (TEXT), product_name (TEXT), category (TEXT), amount (REAL), order_date (TEXT), status (TEXT)\n\n"
         "Rules:\n"
         "1. Output ONLY a valid JSON object matching the requested schema. Do not explain anything.\n"
-        "2. The 'sql_filter' must be a valid SQLite condition (without SELECT prefix) to filter customers, suitable for: SELECT * FROM customers WHERE owner_id = X AND (sql_filter).\n"
-        "3. For spent thresholds, use total_amount. If target is 'premium' or 'high spenders', query sum of Completed orders > 100 or total_amount > 100.\n"
+        "2. The 'sql_filter' must be a valid SQLite condition (without SELECT prefix) to filter customers, suitable for: SELECT * FROM customers WHERE (sql_filter).\n"
+        "3. You can query customer metrics directly on the customers table (e.g., total_spent > 100, order_count > 3, tags LIKE '%vip%', city = 'Delhi').\n"
         "4. 'channel' must be exactly 'Email', 'SMS', or 'WhatsApp'. Choose the channel that best suits the campaign objective.\n"
         "5. The 'campaign_message' should be concise, highly engaging, personalized, and under 250 characters.\n"
         "6. The 'cta' is the Call-to-Action button text (e.g. 'Get 20% Off')."

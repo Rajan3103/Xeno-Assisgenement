@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from app.models.models import Customer, User, Order, Campaign
 from app.schemas.customer import CustomerCreate, CustomerUpdate
@@ -28,7 +29,7 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 # Customer CRUD operations
-def get_customer(db: Session, customer_id: int):
+def get_customer(db: Session, customer_id: str):
     return db.query(Customer).filter(Customer.id == customer_id).first()
 
 def get_customers(db: Session, skip: int = 0, limit: int = 100):
@@ -55,7 +56,11 @@ def get_customers_by_owner(
     return query.offset(skip).limit(limit).all()
 
 def create_customer(db: Session, customer: CustomerCreate, owner_id: int):
-    db_customer = Customer(**customer.model_dump(), owner_id=owner_id)
+    db_customer = Customer(**customer.model_dump(exclude={"id"}), owner_id=owner_id)
+    if customer.id:
+        db_customer.id = customer.id
+    else:
+        db_customer.id = f"cust_{uuid.uuid4().hex[:9]}"
     db.add(db_customer)
     db.commit()
     db.refresh(db_customer)
@@ -67,7 +72,7 @@ def get_orders_by_owner(
     owner_id: int,
     skip: int = 0,
     limit: int = 100,
-    customer_id: int = None,
+    customer_id: str = None,
     status: str = None
 ):
     query = db.query(Order).join(Customer)
@@ -78,13 +83,17 @@ def get_orders_by_owner(
     return query.offset(skip).limit(limit).all()
 
 def create_order(db: Session, order: OrderCreate):
-    db_order = Order(**order.model_dump())
+    db_order = Order(**order.model_dump(exclude={"id"}))
+    if order.id:
+        db_order.id = order.id
+    else:
+        db_order.id = f"ord_{uuid.uuid4().hex[:9]}"
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
     return db_order
 
-def update_customer(db: Session, customer_id: int, customer: CustomerUpdate):
+def update_customer(db: Session, customer_id: str, customer: CustomerUpdate):
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not db_customer:
         return None
@@ -98,7 +107,7 @@ def update_customer(db: Session, customer_id: int, customer: CustomerUpdate):
     db.refresh(db_customer)
     return db_customer
 
-def delete_customer(db: Session, customer_id: int):
+def delete_customer(db: Session, customer_id: str):
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not db_customer:
         return None

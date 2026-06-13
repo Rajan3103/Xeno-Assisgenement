@@ -8,9 +8,20 @@ class CustomerBase(BaseModel):
     phone: Optional[str] = None
     company: Optional[str] = None
     status: Optional[str] = "Lead"
+    city: Optional[str] = None
+    state: Optional[str] = None
+    total_spent: Optional[float] = 0.0
+    order_count: Optional[int] = 0
+    avg_order_value: Optional[float] = 0.0
+    last_order_date: Optional[str] = None
+    first_order_date: Optional[str] = None
+    rfm_recency: Optional[int] = None
+    rfm_frequency: Optional[int] = None
+    rfm_monetary: Optional[int] = None
+    tags: Optional[str] = None
 
 class CustomerCreate(CustomerBase):
-    pass
+    id: Optional[str] = None
 
 class CustomerUpdate(BaseModel):
     name: Optional[str] = None
@@ -18,11 +29,22 @@ class CustomerUpdate(BaseModel):
     phone: Optional[str] = None
     company: Optional[str] = None
     status: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    total_spent: Optional[float] = None
+    order_count: Optional[int] = None
+    avg_order_value: Optional[float] = None
+    last_order_date: Optional[str] = None
+    first_order_date: Optional[str] = None
+    rfm_recency: Optional[int] = None
+    rfm_frequency: Optional[int] = None
+    rfm_monetary: Optional[int] = None
+    tags: Optional[str] = None
 
 class CustomerInDBBase(CustomerBase):
-    id: int
+    id: str
     created_at: datetime
-    owner_id: int
+    owner_id: Optional[int] = None
 
     class Config:
         from_attributes = True

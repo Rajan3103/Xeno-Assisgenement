@@ -3,6 +3,7 @@ import urllib.parse
 import json
 import time
 import sys
+import sqlite3
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -64,12 +65,12 @@ def test():
     print()
 
     # 4. Get Orders with pagination and status
-    print("Testing GET /orders/?status=Completed&limit=3...")
-    status, orders = make_request(f"{BASE_URL}/orders/?status=Completed&limit=3", token=token)
+    print("Testing GET /orders/?status=completed&limit=3...")
+    status, orders = make_request(f"{BASE_URL}/orders/?status=completed&limit=3", token=token)
     print(f"Status: {status}")
     print(f"Count returned: {len(orders)}")
     for o in orders:
-        print(f" - Order #{o['id']}: Amount ${o['total_amount']}, Status: {o['status']}")
+        print(f" - Order #{o['id']}: Amount ${o['amount']}, Status: {o['status']}")
     print()
 
     # 5. Create Customer
@@ -79,7 +80,9 @@ def test():
         "email": "jane.watson@example.com",
         "phone": "+1-555-0199",
         "company": "Watson Corp",
-        "status": "Lead"
+        "status": "Lead",
+        "city": "Chennai",
+        "state": "Tamil Nadu"
     }
     status, cust = make_request(f"{BASE_URL}/customers/", method="POST", data=new_cust, token=token)
     print(f"Status: {status}")
@@ -90,18 +93,20 @@ def test():
     print("Testing POST /orders/...")
     new_ord = {
         "customer_id": cust["id"],
-        "total_amount": 1500.75,
-        "status": "Pending"
+        "amount": 1500.75,
+        "product_name": "Lumé Silk Kurta",
+        "category": "tops",
+        "status": "completed"
     }
     status, ord = make_request(f"{BASE_URL}/orders/", method="POST", data=new_ord, token=token)
     print(f"Status: {status}")
-    print(f"Created: Order #{ord['id']} for Customer ID {ord['customer_id']} with total ${ord['total_amount']}")
+    print(f"Created: Order #{ord['id']} for Customer ID {ord['customer_id']} with total ${ord['amount']}")
     print()
 
     # 7. AI Segment Generation
     print("Testing POST /ai/segment...")
     ai_payload = {
-        "prompt": "Customers who spent above ₹5000 last month"
+        "prompt": "Customers who spent above ₹5000"
     }
     status, ai_res = make_request(f"{BASE_URL}/ai/segment", method="POST", data=ai_payload, token=token)
     print(f"Status: {status}")
@@ -137,7 +142,7 @@ def test():
     # 9. AI Draft Generation
     print("Testing POST /ai/draft...")
     draft_payload = {
-        "audience_profile": "Customers who spent above ₹5000 last month"
+        "audience_profile": "Customers who spent above ₹5000"
     }
     status, draft_res = make_request(f"{BASE_URL}/ai/draft", method="POST", data=draft_payload, token=token)
     print(f"Status: {status}")
@@ -146,72 +151,7 @@ def test():
     print(f"Generated CTA:     {draft_res.get('cta')}")
     print()
 
-    # 10. Channel Service POST /send and CRM Callback verification
-    print("Testing Channel Service POST /send on Port 8001...")
-    send_payload = {
-        "recipient": "test.recipient@example.com",
-        "message": "Verify channel service delivery callback loop.",
-        "channel": "WhatsApp",
-        "metadata": {
-            "customer_id": 1,
-            "campaign_id": 1
-        }
-    }
-    # Send request to channel service running on port 8001
-    status, send_res = make_request("http://localhost:8001/api/v1/send", method="POST", data=send_payload)
-    print(f"Status: {status}")
-    print(f"Response: {send_res.get('message')}")
-    print("Waiting 2 seconds for asynchronous callback execution...")
-    time.sleep(2)
-    print()
-
-    # 11. CRM receipts Callback API (POST /api/receipts)
-    print("Testing POST /api/receipts (CRM Receipts Callback)...")
-    receipt_payload = {
-        "communication_id": 1,
-        "status": "Delivered",
-        "receipt_id": "receipt-uuid-12345",
-        "retry_count": 0,
-        "details": "Delivered to recipient mailbox successfully"
-    }
-    status, receipt_res = make_request("http://localhost:8000/api/receipts", method="POST", data=receipt_payload)
-    print(f"Status: {status}")
-    print(f"Response: {receipt_res}")
-    
-    # Verify idempotency (same receipt_id should return idempotent response without error)
-    print("Testing idempotency of POST /api/receipts (sending duplicate receipt)...")
-    status2, receipt_res2 = make_request("http://localhost:8000/api/receipts", method="POST", data=receipt_payload)
-    print(f"Status: {status2}")
-    print(f"Response: {receipt_res2}")
-    
-    # Verify client retry support
-    print("Testing client retries on POST /api/receipts (sending with retry_count > 0)...")
-    retry_payload = {
-        "communication_id": 1,
-        "status": "Opened",
-        "receipt_id": "receipt-uuid-67890",
-        "retry_count": 2,
-        "details": "Recipient opened the email message"
-    }
-    status3, receipt_res3 = make_request("http://localhost:8000/api/receipts", method="POST", data=retry_payload)
-    print(f"Status: {status3}")
-    print(f"Response: {receipt_res3}")
-
-    # Verify versioned endpoint works as well (POST /api/v1/receipts)
-    print("Testing POST /api/v1/receipts (versioned receipts endpoint)...")
-    v1_receipt_payload = {
-        "communication_id": 1,
-        "status": "Clicked",
-        "receipt_id": "receipt-uuid-v1-abc",
-        "retry_count": 0,
-        "details": "Recipient clicked call to action link"
-    }
-    status4, receipt_res4 = make_request(f"{BASE_URL}/receipts", method="POST", data=v1_receipt_payload)
-    print(f"Status: {status4}")
-    print(f"Response: {receipt_res4}")
-    print()
-
-    # 12. End-to-End Campaign -> Channel Service -> Callback integration loop
+    # 10. End-to-End Campaign -> Channel Service -> Callback integration loop
     print("Testing End-to-End Campaign -> Channel Service -> Callback integration loop...")
     e2e_camp = {
         "name": "E2E Promo Blast 2026",
@@ -231,13 +171,13 @@ def test():
     time.sleep(4)
     
     # Connect directly to SQLite to verify updated communication and logged event tables
-    import sqlite3
     conn = sqlite3.connect("sql_app.db")
     cursor = conn.cursor()
+    valid_message_id = None
     try:
-        # Check communications logs
+        # Check messages table (was communications)
         cursor.execute(
-            "SELECT id, customer_id, campaign_id, status FROM communications WHERE campaign_id = ?",
+            "SELECT id, customer_id, campaign_id, status FROM messages WHERE campaign_id = ?",
             (campaign_id,)
         )
         comms = cursor.fetchall()
@@ -246,16 +186,18 @@ def test():
         
         if len(comms) == 0:
             print("ERROR: No communication entries recorded for this active campaign!")
+        else:
+            valid_message_id = comms[0][0]
             
         for comm in comms:
             comm_id, cust_id, camp_id, comm_status = comm
             # Query the events table for this communication
             cursor.execute(
-                "SELECT status, timestamp, receipt_id, retry_count, details FROM communication_events WHERE communication_id = ?",
+                "SELECT event_type, occurred_at, receipt_id, retry_count, details FROM campaign_events WHERE message_id = ?",
                 (comm_id,)
             )
             events = cursor.fetchall()
-            print(f" - Comm ID {comm_id} (Customer ID {cust_id}) -> Status: {comm_status}")
+            print(f" - Message ID {comm_id} (Customer ID {cust_id}) -> Status: {comm_status}")
             print(f"   Historical Events Logged: {len(events)}")
             for idx, ev in enumerate(events, 1):
                 print(f"     Event #{idx}: Status={ev[0]}, ReceiptID={ev[2]}, Details='{ev[4]}'")
@@ -265,7 +207,56 @@ def test():
     finally:
         conn.close()
 
-    # 13. Campaign Launch and Performance Analytics API verification
+    # 11. CRM receipts Callback API (POST /api/receipts) with extracted message ID
+    if valid_message_id:
+        print(f"Testing POST /api/receipts (CRM Receipts Callback) using message ID {valid_message_id}...")
+        receipt_payload = {
+            "communication_id": valid_message_id,
+            "status": "Delivered",
+            "receipt_id": f"receipt-uuid-{uuid.uuid4().hex[:6]}",
+            "retry_count": 0,
+            "details": "Delivered to recipient mailbox successfully"
+        }
+        status, receipt_res = make_request("http://localhost:8000/api/receipts", method="POST", data=receipt_payload)
+        print(f"Status: {status}")
+        print(f"Response: {receipt_res}")
+        
+        # Verify idempotency (same receipt_id should return idempotent response without error)
+        print("Testing idempotency of POST /api/receipts (sending duplicate receipt)...")
+        status2, receipt_res2 = make_request("http://localhost:8000/api/receipts", method="POST", data=receipt_payload)
+        print(f"Status: {status2}")
+        print(f"Response: {receipt_res2}")
+        
+        # Verify client retry support
+        print("Testing client retries on POST /api/receipts (sending with retry_count > 0)...")
+        retry_payload = {
+            "communication_id": valid_message_id,
+            "status": "Opened",
+            "receipt_id": f"receipt-uuid-{uuid.uuid4().hex[:6]}",
+            "retry_count": 2,
+            "details": "Recipient opened the email message"
+        }
+        status3, receipt_res3 = make_request("http://localhost:8000/api/receipts", method="POST", data=retry_payload)
+        print(f"Status: {status3}")
+        print(f"Response: {receipt_res3}")
+
+        # Verify versioned endpoint works as well (POST /api/v1/receipts)
+        print("Testing POST /api/v1/receipts (versioned receipts endpoint)...")
+        v1_receipt_payload = {
+            "communication_id": valid_message_id,
+            "status": "Clicked",
+            "receipt_id": f"receipt-uuid-{uuid.uuid4().hex[:6]}",
+            "retry_count": 0,
+            "details": "Recipient clicked call to action link"
+        }
+        status4, receipt_res4 = make_request(f"{BASE_URL}/receipts", method="POST", data=v1_receipt_payload)
+        print(f"Status: {status4}")
+        print(f"Response: {receipt_res4}")
+        print()
+    else:
+        print("Skipping receipt callback tests because no active message ID was generated.")
+
+    # 12. Campaign Launch and Performance Analytics API verification
     print("Testing POST /campaigns/{campaign_id}/launch and GET /campaigns/{campaign_id}/analytics...")
     draft_camp = {
         "name": "Draft Launch Test Campaign",
@@ -299,7 +290,7 @@ def test():
     print(f"Analytics Data: {analytics_res}")
     print()
 
-    # 14. CRM Global Analytics API verification
+    # 13. CRM Global Analytics API verification
     print("Testing GET /api/analytics (CRM Global Analytics)...")
     status9, global_analytics_res = make_request("http://localhost:8000/api/analytics", method="GET", token=token)
     print(f"Status: {status9}")
@@ -312,7 +303,7 @@ def test():
     print(f"Global Analytics V1 Data: {global_analytics_v1_res}")
     print()
 
-    # 15. AI Insights generation (POST /api/v1/ai/insights)
+    # 14. AI Insights generation (POST /api/v1/ai/insights)
     print("Testing POST /api/v1/ai/insights...")
     insights_payload = {
         "campaign_id": campaign_id_to_launch
@@ -325,7 +316,7 @@ def test():
     print(f"Next best action: {insights_res.get('next_best_action')}")
     print()
 
-    # 16. AI Marketing Command Center blueprint generation (POST /api/v1/ai/command)
+    # 15. AI Marketing Command Center blueprint generation (POST /api/v1/ai/command)
     print("Testing POST /api/v1/ai/command...")
     command_payload = {
         "prompt": "Increase repeat purchases among premium shoppers."
@@ -341,10 +332,6 @@ def test():
     print(f"Audience Reach Count: {command_res.get('audience_count')}")
     print()
 
-
 if __name__ == "__main__":
+    import uuid
     test()
-
-
-
-

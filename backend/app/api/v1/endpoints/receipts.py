@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
 from app.core.database import get_db
-from app.models.models import Communication, CommunicationEvent
+from app.models.models import Communication, CommunicationEvent, ReceiptIdempotency
 from app.schemas.receipt import ReceiptCreate, ReceiptResponse
 
 router = APIRouter()
@@ -21,27 +21,37 @@ def update_communication_and_log_event(db: Session, payload: ReceiptCreate):
             detail=f"Communication record with ID {payload.communication_id} not found"
         )
 
-    # 2. Idempotency Check: if receipt_id is provided, check if event exists
+    # 2. Idempotency Check: if receipt_id is provided, check idempotency table
     if payload.receipt_id:
-        existing_event = db.query(CommunicationEvent).filter(
-            CommunicationEvent.receipt_id == payload.receipt_id
+        existing_idemp = db.query(ReceiptIdempotency).filter(
+            ReceiptIdempotency.idempotency_key == payload.receipt_id
         ).first()
-        if existing_event:
+        if existing_idemp:
+            # Find the existing event to return its ID, or default to 1
+            existing_event = db.query(CommunicationEvent).filter(
+                CommunicationEvent.receipt_id == payload.receipt_id
+            ).first()
+            event_id = existing_event.id if existing_event else 1
             return ReceiptResponse(
                 status="success",
                 message="Receipt already processed (idempotent)",
-                event_id=existing_event.id,
+                event_id=event_id,
                 communication_id=comm.id,
                 new_status=comm.status
             )
+
+        # Log new idempotency key
+        db.add(ReceiptIdempotency(idempotency_key=payload.receipt_id))
 
     # 3. Update communication status
     comm.status = payload.status
     db.add(comm)
 
-    # 4. Store event history
+    # 4. Store event history matching new columns
     event = CommunicationEvent(
-        communication_id=payload.communication_id,
+        message_id=comm.id,
+        campaign_id=comm.campaign_id,
+        customer_id=comm.customer_id,
         status=payload.status,
         receipt_id=payload.receipt_id,
         retry_count=payload.retry_count or 0,

@@ -22,6 +22,14 @@ class CampaignUpdate(BaseModel):
 class CampaignInDBBase(CampaignBase):
     id: int
     created_at: datetime
+    total_recipients: Optional[int] = 0
+    sent_count: Optional[int] = 0
+    delivered_count: Optional[int] = 0
+    opened_count: Optional[int] = 0
+    clicked_count: Optional[int] = 0
+    failed_count: Optional[int] = 0
+    revenue_attributed: Optional[float] = 0.0
+    started_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -39,4 +47,3 @@ class CampaignAnalytics(BaseModel):
     delivery_rate: float
     open_rate: float
     click_rate: float
-

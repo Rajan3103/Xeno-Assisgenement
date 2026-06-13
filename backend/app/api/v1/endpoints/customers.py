@@ -43,7 +43,7 @@ def read_customers(
 def read_customer(
     *,
     db: Session = Depends(get_db),
-    id: int,
+    id: str,
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
     customer = crud_customer.get_customer(db, customer_id=id)
@@ -55,7 +55,7 @@ def read_customer(
 def update_customer(
     *,
     db: Session = Depends(get_db),
-    id: int,
+    id: str,
     customer_in: schema_customer.CustomerUpdate,
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
@@ -69,7 +69,7 @@ def update_customer(
 def delete_customer(
     *,
     db: Session = Depends(get_db),
-    id: int,
+    id: str,
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
     customer = crud_customer.get_customer(db, customer_id=id)

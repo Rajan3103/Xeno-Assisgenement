@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class ReceiptCreate(BaseModel):
-    communication_id: int
+    communication_id: str
     status: str
     receipt_id: Optional[str] = None
     retry_count: Optional[int] = 0
@@ -12,5 +12,5 @@ class ReceiptResponse(BaseModel):
     status: str
     message: str
     event_id: int
-    communication_id: int
+    communication_id: str
     new_status: str

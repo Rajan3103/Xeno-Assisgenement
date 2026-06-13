@@ -73,10 +73,12 @@ def dispatch_campaign_messages(campaign_id: int, owner_id: int):
             if existing:
                 continue
                 
+            import uuid
             db_comm = Communication(
+                id=f"msg_{uuid.uuid4().hex[:9]}",
                 customer_id=row.id,
                 campaign_id=campaign.id,
-                type=campaign.channel,
+                channel=campaign.channel,
                 status="Sending"
             )
             db.add(db_comm)

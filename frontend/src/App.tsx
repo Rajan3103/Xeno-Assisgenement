@@ -85,15 +85,8 @@ export default function App() {
   const [activeCampaignSize, setActiveCampaignSize] = useState(1000);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [systemAlert, setSystemAlert] = useState<string | null>(null);
-  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(() => {
-    const savedRole = localStorage.getItem("xp_role") || "Admin";
-    if (savedRole === "Admin") {
-      return { name: "Alex Executive", email: "admin@xenopulse.com", role: "Admin" };
-    } else {
-      return { name: "Jane Manager", email: "manager@xenopulse.com", role: "MarketingManager" };
-    }
-  });
-  const [authLoading, setAuthLoading] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Pagination and optimized state variables
   const [totalCustomers, setTotalCustomers] = useState(0);
@@ -138,7 +131,22 @@ export default function App() {
   };
 
   const checkSession = async () => {
-    setAuthLoading(false);
+    setAuthLoading(true);
+    try {
+      const res = await fetch("/api/auth/session");
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        setActiveTab(data.user.role === "Admin" ? "insights" : "command");
+      } else {
+        setUser(null);
+      }
+    } catch (e) {
+      console.error("Session check failed", e);
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -559,16 +567,24 @@ export default function App() {
                 <p className="text-[9px] font-mono text-zinc-500 truncate mt-0.5 uppercase tracking-wider">{user?.role}</p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                const nextRole = user?.role === "Admin" ? "MarketingManager" : "Admin";
-                localStorage.setItem("xp_role", nextRole);
-                window.location.reload();
-              }}
-              className="w-full py-1.5 text-center bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/30 text-indigo-400 hover:text-white rounded text-[9px] font-mono font-bold tracking-wider transition-colors cursor-pointer"
-            >
-              SWITCH TO {user?.role === "Admin" ? "MARKETING MANAGER" : "ADMIN"}
-            </button>
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button
+                onClick={() => {
+                  const nextRole = user?.role === "Admin" ? "MarketingManager" : "Admin";
+                  localStorage.setItem("xp_role", nextRole);
+                  window.location.reload();
+                }}
+                className="py-1.5 text-center bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/30 text-indigo-400 hover:text-white rounded text-[9px] font-mono font-bold tracking-wider transition-colors cursor-pointer"
+              >
+                ROLE
+              </button>
+              <button
+                onClick={handleLogout}
+                className="py-1.5 text-center bg-red-950/40 hover:bg-red-900/40 border border-red-900/30 text-red-400 hover:text-white rounded text-[9px] font-mono font-bold tracking-wider transition-colors cursor-pointer"
+              >
+                LOG OUT
+              </button>
+            </div>
           </div>
 
 

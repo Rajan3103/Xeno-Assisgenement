@@ -35,7 +35,7 @@ class SendPayload(BaseModel):
 STATUS_OPTIONS = ["Delivered", "Failed", "Opened", "Read", "Clicked"]
 STATUS_WEIGHTS = [0.30, 0.10, 0.25, 0.20, 0.15]
 
-def trigger_crm_callback(callback_url: str, customer_id: int, campaign_id: int, channel: str, status: str):
+def trigger_crm_callback(callback_url: str, customer_id: str, campaign_id: int, channel: str, status: str):
     payload = {
         "customer_id": customer_id,
         "campaign_id": campaign_id,
@@ -49,7 +49,7 @@ def trigger_crm_callback(callback_url: str, customer_id: int, campaign_id: int, 
     except Exception as e:
         print(f"[Callback] Failed to dispatch CRM callback: {e}")
 
-def trigger_receipt_callback(receipts_url: str, communication_id: int, status: str, channel: str):
+def trigger_receipt_callback(receipts_url: str, communication_id: str, status: str, channel: str):
     payload = {
         "communication_id": communication_id,
         "status": status,
@@ -103,7 +103,7 @@ def send_message_endpoint(payload: SendPayload, background_tasks: BackgroundTask
             background_tasks.add_task(
                 trigger_receipt_callback,
                 receipts_url,
-                int(communication_id),
+                str(communication_id),
                 simulated_status,
                 payload.channel
             )
@@ -111,7 +111,7 @@ def send_message_endpoint(payload: SendPayload, background_tasks: BackgroundTask
             background_tasks.add_task(
                 trigger_crm_callback,
                 settings.CRM_CALLBACK_URL,
-                int(customer_id),
+                str(customer_id),
                 int(campaign_id),
                 payload.channel,
                 simulated_status

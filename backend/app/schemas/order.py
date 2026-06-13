@@ -3,20 +3,26 @@ from datetime import datetime
 from typing import Optional
 
 class OrderBase(BaseModel):
-    customer_id: int
-    total_amount: float
-    status: Optional[str] = "Pending"
+    customer_id: str
+    amount: float
+    product_name: str
+    category: str
+    campaign_id: Optional[int] = None
+    status: Optional[str] = "completed"
 
 class OrderCreate(OrderBase):
-    pass
+    id: Optional[str] = None
 
 class OrderUpdate(BaseModel):
-    customer_id: Optional[int] = None
-    total_amount: Optional[float] = None
+    customer_id: Optional[str] = None
+    amount: Optional[float] = None
+    product_name: Optional[str] = None
+    category: Optional[str] = None
+    campaign_id: Optional[int] = None
     status: Optional[str] = None
 
 class OrderInDBBase(OrderBase):
-    id: int
+    id: str
     order_date: datetime
 
     class Config:

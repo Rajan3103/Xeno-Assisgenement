@@ -32,7 +32,7 @@ def read_orders(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    customer_id: Optional[int] = None,
+    customer_id: Optional[str] = None,
     status: Optional[str] = None,
     current_user: schema_auth.User = Depends(get_current_user),
 ) -> Any:
