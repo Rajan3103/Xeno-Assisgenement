@@ -5,7 +5,7 @@ import './index.css';
 
 // Global Fetch Interceptor to map Vite React SPA to FastAPI Backend
 const realFetch = window.fetch;
-const apiBase = (import.meta.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+const apiBase = (import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
 const originalFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (apiBase) {

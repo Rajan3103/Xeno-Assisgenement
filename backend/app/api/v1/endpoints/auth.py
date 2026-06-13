@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
@@ -13,21 +13,36 @@ from app.schemas import auth as schema_auth
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False)
 
 from fastapi import Request
 
 def get_current_user(
     request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> schema_auth.User:
     from app.models.models import User as DBUser
+
+    # Try to decode real JWT token first
+    if token:
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id: int = int(payload.get("sub", 0))
+            if user_id:
+                user = db.query(DBUser).filter(DBUser.id == user_id).first()
+                if user and user.is_active:
+                    return user
+        except (JWTError, ValueError, Exception):
+            pass
+
+    # Fallback: use x-role header (for development/testing)
     role = request.headers.get("x-role", "Admin")
     if role.lower() == "admin":
         role = "Admin"
     else:
         role = "MarketingManager"
-        
+
     user = DBUser(
         id=1 if role == "Admin" else 2,
         email="admin@xenopulse.com" if role == "Admin" else "manager@xenopulse.com",
@@ -58,15 +73,16 @@ def login(
     user = crud_customer.get_user_by_email(db, email=form_data.username)
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     elif not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": security.create_access_token(
