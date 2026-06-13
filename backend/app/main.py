@@ -12,6 +12,22 @@ from app.models import models
 # Create database tables automatically
 Base.metadata.create_all(bind=engine)
 
+# Auto-seed database if empty on startup
+from app.core.database import SessionLocal
+from app.models.models import User
+from app.seed import main as seed_main
+
+db = SessionLocal()
+try:
+    if db.query(User).count() == 0:
+        print("[Startup] Database is empty. Seeding customer, order, and user data...")
+        seed_main()
+        print("[Startup] Database seeding completed successfully!")
+except Exception as e:
+    print(f"[Startup] Error during automatic seeding check: {e}")
+finally:
+    db.close()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
