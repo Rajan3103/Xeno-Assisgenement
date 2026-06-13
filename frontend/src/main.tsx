@@ -4,7 +4,40 @@ import App from './App.tsx';
 import './index.css';
 
 // Global Fetch Interceptor to map Vite React SPA to FastAPI Backend
-const originalFetch = window.fetch;
+const realFetch = window.fetch;
+const apiBase = (import.meta.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+
+const originalFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  if (apiBase) {
+    if (typeof input === "string") {
+      if (input.startsWith("/api/")) {
+        return realFetch(apiBase + input, init);
+      } else if (input.includes("/api/")) {
+        try {
+          const parsed = new URL(input);
+          if (parsed.pathname.startsWith("/api/")) {
+            return realFetch(apiBase + parsed.pathname + parsed.search, init);
+          }
+        } catch (e) {}
+      }
+    } else if (input instanceof URL) {
+      if (input.pathname.startsWith("/api/")) {
+        return realFetch(new URL(apiBase + input.pathname + input.search), init);
+      }
+    } else if (input && typeof (input as any).url === "string") {
+      const req = input as Request;
+      try {
+        const parsed = new URL(req.url);
+        if (parsed.pathname.startsWith("/api/")) {
+          const newRequest = new Request(apiBase + parsed.pathname + parsed.search, req);
+          return realFetch(newRequest, init);
+        }
+      } catch (e) {}
+    }
+  }
+  return realFetch(input, init);
+};
+
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   let url = typeof input === "string" ? input : input.toString();
 
