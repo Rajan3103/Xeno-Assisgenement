@@ -1,65 +1,71 @@
 # XenoPulse ⚡
 ### AI-Native Marketing Operating System for Enterprise Retail Brands
 
-XenoPulse is a high-performance, production-ready marketing operating system designed for modern retail organizations. The platform enables marketing teams to switch between active brand workspaces, generate data-driven campaigns from natural language using the Gemini API, parse customer segments semantically, run real-time message dispatch simulators, and monitor growth metrics instantly.
+XenoPulse is a high-performance, production-ready marketing operating system for modern retail organizations. Marketing teams can generate data-driven campaigns from natural language using the Gemini API, parse customer segments semantically, run real-time message dispatch simulators, and monitor growth metrics — all backed by a live PostgreSQL database on Railway.
+
+---
 
 ## 🌐 Live Deployments
 
-| Component | Service Platform | Deployment URL |
+| Component | Platform | URL |
 | :--- | :--- | :--- |
 | **Frontend Client** | Vercel | [xeno-assisgenement.vercel.app 🚀](https://xeno-assisgenement.vercel.app/) |
-| **Backend API Server** | Railway | [xenopulse-crm-backend-production.up.railway.app ⚙️](https://xenopulse-crm-backend-production.up.railway.app/) |
+| **Backend API** | Railway | [xenopulse-crm-backend-production.up.railway.app ⚙️](https://xenopulse-crm-backend-production.up.railway.app/) |
+| **Database** | Railway PostgreSQL | Managed PostgreSQL (Oregon, US) |
 
 ---
 
 ## 🏗️ System Architecture
 
-XenoPulse is architected as a fully decoupled monorepo split into an independent static frontend, a stateless Python/FastAPI backend, and a dedicated message dispatch microservice:
+XenoPulse is a fully decoupled monorepo: a static React SPA on Vercel, a FastAPI backend on Railway, backed by a managed PostgreSQL database.
 
 ```mermaid
 graph TD
-    subgraph Client ["Frontend Client"]
+    subgraph Client ["Frontend — Vercel"]
         UI["React 19 SPA (Vite + Tailwind CSS v4)"]
-        MockSocket["Mock Socket.io (Client-Side Simulation)"]
+        Interceptor["Global Fetch Interceptor (main.tsx)"]
     end
 
-    subgraph Server ["Backend Server"]
-        FastAPI["FastAPI Python Server (Port 8000)"]
+    subgraph Server ["Backend — Railway"]
+        FastAPI["FastAPI + Uvicorn (Port $PORT)"]
+        Auth["JWT Auth (/api/v1/auth)"]
+        AI["Gemini AI Endpoint (/api/v1/ai)"]
+    end
+
+    subgraph Storage ["Storage"]
+        PG[("PostgreSQL Database (Railway)")]
+        SQLAlchemy["SQLAlchemy ORM"]
     end
 
     subgraph Channel ["Channel Microservice"]
-        ChannelService["FastAPI Channel Service (Port 8001)"]
+        ChannelService["FastAPI Channel Service"]
     end
 
-    subgraph Storage ["Services & Storage"]
-        SQLite[("SQLite Database")]
-        SQLAlchemy["SQLAlchemy ORM"]
-        Gemini["Gemini AI (gemini-2.5-flash via REST)"]
-    end
-
-    UI -->|API Requests / Proxy| FastAPI
-    FastAPI --> SQLite
-    FastAPI -->|HTTP Send Request| ChannelService
-    ChannelService -->|Status Callback POST /api/receipts| FastAPI
-    FastAPI -.->|AI Analysis| Gemini
+    UI --> Interceptor
+    Interceptor -->|"VITE_API_URL → Railway"| FastAPI
+    FastAPI --> Auth
+    FastAPI --> AI
+    FastAPI --> SQLAlchemy
+    SQLAlchemy --> PG
+    FastAPI -->|"HTTP Dispatch"| ChannelService
+    ChannelService -->|"Status Callbacks POST /api/receipts"| FastAPI
+    AI -..->|"NLP + Insights"| Gemini["Gemini 2.5 Flash API"]
 ```
 
 ---
 
-## 📷 Project User Interface Gallery
+## 📷 UI Gallery
 
-Here are the key interfaces developed for the XenoPulse Marketing OS platform:
+### ⚡ Insights Engine Dashboard
+![Client Dashboard](docs/images/landing.png)
 
-### ⚡ Client Dashboard & Active System Status
-![Client Dashboard & Active System Status](docs/images/landing.png)
-
-### 🧠 AI Command Center Segment Builder
+### 🧠 AI Command Center
 ![AI Command Center](docs/images/command.png)
 
-### 📊 Customer Intelligence & Transaction Analytics
+### 📊 Customer Intelligence & Analytics
 ![Customer Intelligence](docs/images/analytics.png)
 
-### 🚀 Campaign Studio & Outreach Dispatcher
+### 🚀 Campaign Studio & Dispatcher
 ![Campaign Studio](docs/images/campaigns.png)
 
 ### 🎯 Audience Segment Planner
@@ -67,117 +73,220 @@ Here are the key interfaces developed for the XenoPulse Marketing OS platform:
 
 ---
 
-## ⚡ Core Capabilities & Features
-
-### 🏢 Brand Tenancy Configuration
-* **Database-Level Partitioning**: Multi-tenant database model isolating customer records, orders, and campaigns.
-* **Shared Pool Tenancy**: Shared database schema where Admins and Managers have contextual role-based control panels to provision users and view campaigns.
+## ⚡ Core Features
 
 ### 🧠 AI Command Center & Semantic Segment Builder
-* **Dynamic Database Context Feeding**: Scans the database to query target segment size and passes active cohort counts to Gemini. This allows the AI model to recommend high-impact message templates and predict click-through rates.
-* **Natural Language Queries**: Uses Gemini to parse conversational inputs (e.g., *"Chennai VIP customers who spent more than 50,000 rupees and have been inactive for 45 days"*) into structured query filters.
+- **Natural Language → SQL**: Parses inputs like *"Chennai VIP customers who spent over ₹50,000 and haven't ordered in 45 days"* into structured filters using Gemini 2.5 Flash.
+- **Dynamic DB Context**: Queries live PostgreSQL counts before calling Gemini so recommendations are always accurate.
 
-### 🔄 Real-time Campaign Simulator Loop & Controls
-* **Decoupled Async Processing**: Launching a campaign initiates background tasks that simulate recipient message delivery lifecycles (`SENT` -> `DELIVERED` -> `READ` -> `CLICKED` -> `CONVERTED`).
-* **Simulation Controls**: Play/Pause controls and speed multipliers (`1x`, `2x`, `5x`, `10x`) allow adjusting the live ticker rate or halting execution in-flight.
-* **Callback Receipts**: Integrates callback endpoints (`/api/receipts`) to log delivery events, update stats, and broadcast live telemetry to the browser via the simulated socket.
-* **Dynamic Database Side-Effects**: Simulated conversions dynamically feed order histories, instantly recalculating customer metrics in real-time.
+### 🔄 Real-Time Campaign Simulator
+- **Delivery Lifecycle**: `QUEUED → SENT → DELIVERED → READ → CLICKED → CONVERTED`
+- **Controls**: Play/Pause and speed multipliers (`1x`, `2x`, `5x`, `10x`)
+- **Callback Receipts**: Delivery events hit `/api/receipts`, update DB stats, and stream live telemetry to the browser.
 
-### 📱 Interactive Multi-Channel Campaign Previewer
-* **Device Mockup Skins**: Smartphone skin rendering changes contextually based on the chosen marketing channel (WhatsApp chat thread UI, SMS message card, RCS media card with suggested reply action chips, or styled Email details template).
-* **Real-time Personalization Parsing**: Dynamically replaces template parameters such as `{first_name}` with realistic dummy data (`Alex`) on keypress events.
+### 📱 Multi-Channel Message Previewer
+- **Live Device Skins**: WhatsApp chat thread, SMS card, RCS media card, Email template — changes automatically by channel.
+- **Template Personalization**: Replaces `{first_name}` tokens with live dummy data on every keypress.
 
-### 📊 Historical Campaign Performance & AI Churn Alerts
-* **AI Insights Engine**: Scanning client records for drop-off risks with health scores below 50. A "Rescue" button triggers redirection to the Campaign Studio and preloads recovery templates for the target user instantly.
-* **Recharts Dashboard**: Real-time visualization of campaigns performance, delivery/open/click rates, and live status change updates.
+### 📊 Insights Engine & AI Churn Alerts
+- **Health Scores**: Identifies at-risk customers (score < 50) and triggers targeted recovery campaigns.
+- **Recharts Dashboards**: Real-time delivery rates, open/click metrics, and RFM segment charts.
 
 ### 🛡️ Role-Based Access Control (RBAC)
-* **JWT Token Verification**: Restricts administrative capabilities (such as customer profile deletion/pruning) using RBAC. Attempts by managers to invoke deletion API endpoints are rejected on the backend (`403 Forbidden`) and blocked on the client.
+- **JWT Sessions**: `python-jose` + `passlib[bcrypt]` token validation on every protected endpoint.
+- **Admin vs Manager**: Admins have full CRUD rights; Manager role is blocked from destructive operations (`403 Forbidden`) both on the API and in the UI.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Component | Version | Description |
+| Layer | Technology | Version |
 | :--- | :--- | :--- |
-| **Frontend Framework** | React `19.0.1` | High-performance client SPA |
-| **Build Tool** | Vite `6.2.3` | Lightning-fast frontend tooling |
-| **Styling** | Tailwind CSS `4.1.14` | Utility-first CSS framework |
-| **Charts** | Recharts `3.8.1` | Vibrant interactive dashboards |
-| **UI Icons** | Lucide React `0.546.0` | Clean icon system |
-| **Animations** | Motion `12.23.24` | Smooth micro-animations |
-| **WebSockets (Client)** | Socket.io-client `4.8.3` | Custom MockSocket real-time event simulation |
-| **Backend Runtime** | Python `3.10+` | High-performance async backend |
-| **API Framework** | FastAPI `≥0.110.0` + Uvicorn `≥0.28.0` | REST API & ASGI server |
-| **ORM** | SQLAlchemy `≥2.0.0` | Database modeling and queries |
-| **AI Integration** | Gemini API | Gemini 2.5 Flash NLP & insights |
-| **Auth** | python-jose `≥3.3.0` + passlib[bcrypt] `≥1.7.4` | JWT sessions and password hashing |
-| **Validation** | Pydantic `≥2.0.0` + pydantic-settings `≥2.0.0` | Request/response schema enforcement |
+| Frontend Framework | React | `19.0.1` |
+| Build Tool | Vite | `6.2.3` |
+| Styling | Tailwind CSS | `4.1.14` |
+| Charts | Recharts | `3.8.1` |
+| Animations | Motion | `12.23.24` |
+| Icons | Lucide React | `0.546.0` |
+| WebSocket Sim | Socket.io-client | `4.8.3` |
+| Backend Runtime | Python | `3.11+` |
+| API Framework | FastAPI + Uvicorn | `≥0.110.0` |
+| ORM | SQLAlchemy | `≥2.0.0` |
+| Database (Prod) | PostgreSQL | Railway Managed |
+| Database (Dev) | SQLite | local |
+| Auth | python-jose + passlib[bcrypt] | `≥3.3.0` |
+| Validation | Pydantic + pydantic-settings | `≥2.0.0` |
+| AI | Google Gemini API | 2.5 Flash |
+| PG Driver | psycopg2-binary | `≥2.9.0` |
 
 ---
 
 ## 📂 Project Structure
 
-The repository is organized into independent folder workspaces:
-* [**`frontend/`**](file:///e:/Xeno-Assisgenement/frontend): Standalone client-side application (React 19 + Vite + Tailwind CSS v4).
-* [**`backend/`**](file:///e:/Xeno-Assisgenement/backend): FastAPI backend server with SQLAlchemy ORM and SQLite.
-* [**`channel-service/`**](file:///e:/Xeno-Assisgenement/channel-service): FastAPI message delivery and receipt callbacks simulator.
+```
+Xeno-Assisgenement/
+├── backend/              ← FastAPI backend (Railway deployment root)
+│   ├── app/
+│   │   ├── api/v1/       ← Route handlers (auth, customers, campaigns, ai…)
+│   │   ├── core/         ← Config, DB engine, security utils
+│   │   ├── crud/         ← Database operations
+│   │   ├── models/       ← SQLAlchemy ORM models
+│   │   ├── schemas/      ← Pydantic schemas
+│   │   ├── seed.py       ← Seeds 1,000 customers + 5,000 orders on startup
+│   │   └── main.py       ← App entry point + auto-seed on cold start
+│   ├── railway.json      ← Railway deployment config
+│   ├── requirements.txt  ← Python dependencies
+│   └── .env              ← Local dev environment (git-ignored)
+├── frontend/             ← React SPA (Vercel deployment)
+│   ├── src/
+│   │   ├── main.tsx      ← Global fetch interceptor (API routing + auth)
+│   │   └── App.tsx       ← Root component + role-based routing
+│   ├── .env.example      ← Required environment variables
+│   └── vite.config.ts    ← Vite config (proxy, envPrefix)
+├── channel-service/      ← Message dispatch microservice
+├── Procfile              ← Fallback start command for Railway
+├── railway.json          ← Root Railway config
+├── vercel.json           ← Vercel SPA rewrite rules
+└── deploy_steps.md       ← Full production deployment guide
+```
 
 ---
 
-## 🚀 Local Development Quickstart
+## 🚀 Local Development
 
-### 1. Prerequisites
-Ensure you have **Node.js** (v18+) and **Python** (v3.10+).
+### Prerequisites
+- **Node.js** v18+
+- **Python** v3.11+
 
-### 2. Configure Environment Variables
-Create a `.env` file in the `backend/` directory:
-```env
-DATABASE_URL="sqlite:///./sql_app.db"
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-SECRET_KEY="xenopulse_super_secret_jwt_key_2026"
-```
-
-### 3. Setup Backend & Seed Database
+### 1. Backend Setup
 ```bash
 cd backend
+
+# Create virtual environment
 python -m venv venv
-# Activate virtual environment (Windows):
-.\venv\Scripts\activate
-# Activate virtual environment (macOS/Linux):
+
+# Activate (Windows)
+.\\venv\\Scripts\\activate
+# Activate (macOS/Linux)
 source venv/bin/activate
 
 pip install -r requirements.txt
-python -m app.seed # Seeds 1000 customers & 5000 orders
+```
+
+Create `backend/.env`:
+```env
+DATABASE_URL=sqlite:///./sql_app.db
+GEMINI_API_KEY=your_gemini_api_key_here
+SECRET_KEY=xenopulse_super_secret_jwt_key_2026
+ACCESS_TOKEN_EXPIRE_MINUTES=11520
+```
+
+Start the backend (auto-seeds DB on first run):
+```bash
 python -m uvicorn app.main:app --port 8000
 ```
-API docs will be live at `http://localhost:8000/docs`.
+API docs: `http://localhost:8000/docs`
 
-### 4. Setup Channel Service
+### 2. Channel Service Setup
 ```bash
 cd channel-service
 python -m venv venv
-# Activate virtual environment (Windows):
-.\venv\Scripts\activate
-
+.\\venv\\Scripts\\activate   # or: source venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --port 8001
 ```
 
-### 5. Setup Frontend
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
+```
+
+Create `frontend/.env.local`:
+```env
+# For local dev, leave blank (Vite proxy handles /api → localhost:8000)
+# VITE_API_URL=http://localhost:8000
+```
+
+```bash
 npm run dev
 ```
-Open **`http://localhost:5173`** to access the dashboard!
+Open **`http://localhost:5173`**
 
 ---
 
-## 🔐 Authentication & Quick Switching
+## 🔐 Default Credentials
 
-Although the frontend is configured to bypass the credentials gate and load directly into the workspace, you can quick-switch roles contextually using the Header dropdown or the Sidebar toggle button.
+| Role | Email | Password | Dashboard |
+| :--- | :--- | :--- | :--- |
+| Admin | `admin@xenopulse.com` | `admin123` | Insights Engine |
+| Admin (alt) | `admin@xenopulse.ai` | `admin123` | Insights Engine |
+| Marketing Manager | `manager@xenopulse.com` | `manager123` | AI Command Center |
 
-For API testing (`test_api.py`) or database direct access, the prefilled test credentials remain fully active:
-* **Admin**: `admin@xenopulse.com` / `admin123` or `admin@xenopulse.ai` / `admin123` (Full administrative rights)
-* **Manager**: `manager@xenopulse.com` / `manager123` (Standard manager role)
+> **Credentials are seeded automatically** into PostgreSQL (production) or SQLite (local) on the first cold start.
+
+---
+
+## ☁️ Production Deployment
+
+See **[`deploy_steps.md`](deploy_steps.md)** for the complete guide. Summary:
+
+### Railway (Backend)
+1. Connect GitHub repo → set **Root Directory** to `backend`
+2. Set environment variables:
+
+```
+DATABASE_URL=postgresql://postgres:<password>@<host>:<port>/railway
+SECRET_KEY=<random-long-string>
+GEMINI_API_KEY=<your-key>
+PYTHONPATH=.
+ACCESS_TOKEN_EXPIRE_MINUTES=11520
+```
+
+3. Start command (auto-detected from `railway.json`):
+```
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+### Vercel (Frontend)
+1. Connect GitHub repo → **Root Directory**: `/` (uses root `vercel.json`)
+2. Set environment variable:
+
+```
+VITE_API_URL=https://<your-backend>.up.railway.app
+```
+
+3. Vercel auto-runs: `npm install --prefix frontend && npm run build --prefix frontend`
+
+---
+
+## 🗃️ Database
+
+| Environment | Database | Details |
+| :--- | :--- | :--- |
+| Production | PostgreSQL | Railway Managed Instance (Oregon, US) |
+| Local Dev | SQLite | `backend/sql_app.db` (auto-created) |
+
+On **first startup**, the backend automatically:
+- Creates all tables via `Base.metadata.create_all()`
+- Seeds **1,000 customers** with RFM scores, city, tags, and order history
+- Seeds **5,000 orders** distributed across VIP, repeat, and casual cohorts
+- Creates **3 default segments** (VIP, Active Buyers, Inactive Leads)
+- Creates **2 sample campaigns** with pre-filled metrics
+
+---
+
+## 📡 Key API Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Health check |
+| `POST` | `/api/v1/auth/login` | Login → returns JWT |
+| `GET` | `/api/v1/auth/me` | Current user profile |
+| `GET` | `/api/v1/customers/` | Paginated customer list |
+| `GET` | `/api/v1/campaigns/` | All campaigns |
+| `POST` | `/api/v1/campaigns/{id}/launch` | Launch campaign |
+| `POST` | `/api/v1/ai/command` | AI goal → campaign strategy |
+| `POST` | `/api/v1/ai/segment` | NL prompt → audience filter |
+| `GET` | `/api/v1/analytics` | Global delivery metrics |
+| `POST` | `/api/receipts` | Delivery callback receipt |
