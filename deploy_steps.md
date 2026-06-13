@@ -1,148 +1,160 @@
-# XenoPulse FastAPI CRM Backend Deployment Guide
+# XenoPulse CRM — Complete Deployment Guide (Railway + Vercel)
 
-Follow these steps to deploy the FastAPI CRM backend to Render with persistent SQLite database storage.
-
----
-
-## Step 1: Push Code to a Git Provider
-To deploy on Render, your codebase must be hosted on a Git provider (such as GitHub or GitLab).
-
-1. Initialize Git in the project root directory (`e:\Xeno-Assisgenement`):
-   ```bash
-   git init
-   ```
-2. Add a `.gitignore` in the root (excluding local SQLite databases like `sql_app.db`, temporary folders, virtual environments, and `.env` files):
-   ```
-   # Python
-   __pycache__/
-   *.pyc
-   *.pyo
-   *.pyd
-   .venv/
-   venv/
-   env/
-   
-   # Databases
-   backend/sql_app.db
-   backend/app/sql_app.db
-   
-   # Environment files
-   .env
-   backend/.env
-   channel-service/.env
-   frontend/.env
-   frontend/.env.local
-   
-   # Node
-   node_modules/
-   .next/
-   dist/
-   ```
-3. Stage and commit your files, including the root [render.yaml](file:///e:/Xeno-Assisgenement/render.yaml) and the `backend/` directory:
-   ```bash
-   git add .
-   git commit -m "chore: prepare for render deployment"
-   ```
-4. Create a repository on GitHub/GitLab and push your main branch:
-   ```bash
-   git remote add origin <your-repo-url>
-   git branch -M main
-   git push -u origin main
-   ```
+This guide takes you from zero to a fully running production deployment with:
+- **Backend**: Railway (FastAPI + PostgreSQL)
+- **Frontend**: Vercel (React/Vite SPA)
 
 ---
 
-## Step 2: Connect and Configure Render Web Service (Free Tier)
-Since Render Blueprints require paid instances for persistent volumes/disks, you can deploy the CRM Backend as a manual **Web Service** on Render's **Free Tier**.
-
-1. Log in to your [Render Dashboard](https://dashboard.render.com).
-2. Click the **"New +"** button in the top navigation bar and select **"Web Service"**.
-3. Under **"Connect a repository"**, select your pushed GitHub repository.
-4. Configure the Web Service Settings:
-   * **Name**: `xenopulse-crm-backend`
-   * **Language**: `Python`
-   * **Branch**: `main`
-   * **Root Directory**: `backend` (This runs commands inside the `backend/` directory)
-   * **Build Command**: `pip install -r requirements.txt`
-   * **Start Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port 10000`
-   * **Instance Type**: Select **"Free"**
-5. Expand the **"Advanced"** settings block and click **"Add Environment Variable"** to add:
-   * **`GEMINI_API_KEY`**: Your Google Gemini developer API Key.
-   * **`SECRET_KEY`**: Any secret string (e.g. `xenopulse_super_secret_jwt_key_2026`).
-   * **`DATABASE_URL`**: `sqlite:///./sql_app.db` (Local SQLite file inside the ephemeral container).
-   * **`PYTHONPATH`**: `.`
-6. Click **"Create Web Service"** to start building.
+## Prerequisites
+- GitHub repository: `https://github.com/Rajan3103/Xeno-Assisgenement`
+- Railway account: https://railway.app
+- Vercel account: https://vercel.com
+- Railway PostgreSQL database already provisioned (URL: `postgresql://postgres:***@thomas.proxy.rlwy.net:27897/railway`)
 
 ---
 
-## Step 3: Seed the DTC Ecommerce Database
-Because the Free Tier uses local ephemeral container storage, the SQLite database is initialized fresh on every deployment or service restart.
+## PART 1: Deploy Backend on Railway
 
-1. Once the `xenopulse-crm-backend` status changes to a green **"Live"**:
-2. Select the `xenopulse-crm-backend` service in your dashboard.
-3. Click the **"Shell"** tab in the left sidebar menu.
-4. Run the database seeding command in the terminal prompt:
-   ```bash
-   python -m app.seed
+### Step 1 — Create a New Railway Project
+
+1. Log in at [railway.app](https://railway.app).
+2. Click **"New Project"** → **"Deploy from GitHub repo"**.
+3. Select the repository `Rajan3103/Xeno-Assisgenement`.
+4. Railway will auto-detect the `railway.json` file in the root.
+
+### Step 2 — Configure Service Settings
+
+1. Click on the created service in the Railway canvas.
+2. Go to **Settings** tab:
+   - **Root Directory**: `backend`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+3. Go to **Variables** tab and add the following:
+
+| Key | Value |
+|---|---|
+| `DATABASE_URL` | `postgresql://postgres:kQyYwPBLpsQSbMUbOjrmLfkeBraYjLob@thomas.proxy.rlwy.net:27897/railway` |
+| `SECRET_KEY` | `xenopulse-production-secret-key-2026` (any long random string) |
+| `GEMINI_API_KEY` | *Your Google Gemini API Key* |
+| `PYTHONPATH` | `.` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `11520` |
+| `CHANNEL_SERVICE_URL` | *Leave blank or add your channel service URL if deployed* |
+
+> **Important**: `DATABASE_URL` must be the full `postgresql://` (not `postgres://`) URL.
+> The backend code automatically handles both prefixes.
+
+### Step 3 — Deploy
+
+1. Click **"Deploy"** to trigger the first build.
+2. Watch the **Build Logs** — you should see:
    ```
-5. This will populate your SQLite database with exactly **1,000 customers**, **5,000 orders**, and initial administrator accounts.
-   *(Note: Remember to run this seeding command if the service restarts and the database is cleared)*
+   pip install -r requirements.txt ✓
+   ```
+3. Watch the **Deploy Logs** — you should see:
+   ```
+   INFO:     Application startup complete.
+   INFO:     Uvicorn running on http://0.0.0.0:<PORT>
+   ```
+4. The backend auto-seeds the PostgreSQL database with 1,000 customers on first startup.
+
+### Step 4 — Verify Backend
+
+Once deployed, open the Railway URL in your browser:
+- `https://<your-backend>.up.railway.app/` → Should return `{"message": "Welcome to XenoPulse CRM Backend"}`
+- `https://<your-backend>.up.railway.app/health` → Should return `{"status": "healthy"}`
+- `https://<your-backend>.up.railway.app/api/v1/openapi.json` → Full OpenAPI spec
 
 ---
 
-## Step 4: Deploy Vite React SPA Frontend to Vercel
-Vercel is the recommended hosting platform for static client SPAs.
+## PART 2: Deploy Frontend on Vercel
 
-1. Log in to your [Vercel Dashboard](https://vercel.com).
-2. Click **"Add New..."** and select **"Project"**.
-3. Import your GitHub repository.
-4. Configure the Project Build Settings:
-   * **Framework Preset**: Vite
-   * **Root Directory**:
-     * **Monorepo Build**: Leave as `.` (our root [vercel.json](file:///e:/Xeno-Assisgenement/vercel.json) will automatically direct Vercel to build the `frontend` folder).
-     * **Subdirectory Build**: Set Root Directory to `frontend/`.
-5. Configure Environment Variables:
-   * Add a new environment variable:
-     * **Key**: `NEXT_PUBLIC_API_URL`
-     * **Value**: `https://xenopulse-crm-backend-production.up.railway.app`
-6. Click **"Deploy"** and wait for Vercel to generate your static build.
-7. Access your dashboard at the generated Vercel domain!
+### Step 5 — Create Vercel Project
+
+1. Log in at [vercel.com](https://vercel.com).
+2. Click **"Add New"** → **"Project"**.
+3. Import the `Rajan3103/Xeno-Assisgenement` GitHub repository.
+4. Vercel auto-detects `vercel.json` in the root.
+
+### Step 6 — Configure Vercel Settings
+
+In the **Configure Project** screen:
+- **Framework Preset**: Vite
+- **Root Directory**: Leave as `/` (root — vercel.json handles build paths)
+- **Build Command**: `npm run build --prefix frontend`
+- **Output Directory**: `frontend/dist`
+- **Install Command**: `npm install --prefix frontend`
+
+### Step 7 — Add Environment Variable (Critical!)
+
+In **Environment Variables**, add:
+
+| Key | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://<your-backend-service>.up.railway.app` |
+
+> **This is the most critical step.** Without this variable pointing to your Railway backend URL,
+> the frontend sends API requests to its own Vercel domain → gets 404 errors → shows
+> **"Invalid credentials"** on login. Always set this before deploying.
+
+### Step 8 — Deploy
+
+1. Click **"Deploy"**.
+2. Wait for the build to complete.
+3. Open your Vercel production URL.
 
 ---
 
-## Step 5: Backend Deployment Alternatives (Railway & Koyeb)
+## PART 3: Verify the Full Stack
 
-If you prefer to deploy the FastAPI backend on platforms other than Render, here are two excellent alternatives offering free developer tier credits:
+### Step 9 — Test Login
 
-### Option A: Deploying to Railway (Recommended)
-Railway is highly recommended for backend hosting. For database storage, you can use SQLite or connect directly to a remote **PostgreSQL Database** (such as a Render Managed PostgreSQL instance).
+1. Navigate to your Vercel URL (e.g., `https://xeno-assisgenement.vercel.app`).
+2. You should see the **XenoPulse Login Screen**.
+3. Click **"Admin Space"** to autofill admin credentials:
+   - Email: `admin@xenopulse.com`
+   - Password: `admin123`
+4. Click **"Authorize Workspace"** → Should load the **Insights Engine dashboard**.
 
-1. Log in to [Railway](https://railway.app).
-2. Click **"New Project"** and select **"Deploy from GitHub repo"**.
-3. Select your repository.
-4. Go to the service **"Variables"** tab and configure:
-   * **`GEMINI_API_KEY`**: Your Google Gemini developer API Key.
-   * **`SECRET_KEY`**: Any secret string.
-   * **`DATABASE_URL`**: Your PostgreSQL Connection String (e.g. `postgresql://<user>:<password>@<host>/<database>?sslmode=require` or the Render external Postgres URL). The backend will automatically map standard `postgres://` protocols to SQLAlchemy-compatible `postgresql://`.
-   * **`PYTHONPATH`**: `.`
-5. Go to the **"Settings"** tab:
-   * **Root Directory**: Set to `backend`
-   * **Build Command**: Set to `pip install -r requirements.txt`
-   * **Start Command**: Set to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   * *Note*: Specifying `--port $PORT` is critical. If your app defaults to port `8080` and ignores Railway's assigned dynamic port, the deployment container health check will fail and Railway will stop the container.
-6. *(Optional: Persistent SQLite Volume setup)*: If you use SQLite (`sqlite:////data/sql_app.db`) instead of PostgreSQL, go to the service's **"Volume"** tab, click **"Add Volume"** to attach a persistent volume (mount directory `/data`). This preserves the database between restarts.
+5. Log out and click **"Manager Space"**:
+   - Email: `manager@xenopulse.com`
+   - Password: `manager123`
+6. Click **"Authorize Workspace"** → Should load the **AI Command Center dashboard**.
 
+### Step 10 — Troubleshooting
 
-### Option B: Deploying to Koyeb (Fast Serverless Runtime)
-Koyeb provides one free Web Service instance with 512MB RAM running 24/7.
+| Error Shown | Cause | Fix |
+|---|---|---|
+| `"Invalid credentials. Please try again."` | Wrong email/password | Use exact: `admin@xenopulse.com` / `admin123` |
+| `"Backend server error (500/503)"` | Railway backend is offline | Check Railway deploy logs; verify `$PORT` is used |
+| `"Backend server error (500)"` on login | `DATABASE_URL` is wrong | Verify Postgres URL in Railway Variables |
+| `"Backend server error (404)"` | Wrong API URL on frontend | Verify `NEXT_PUBLIC_API_URL` in Vercel env vars |
+| Dashboard loads but shows empty data | Seeding failed | Check Railway logs for seed script errors |
 
-1. Sign up on [Koyeb](https://www.koyeb.com).
-2. Click **"Create Service"** and select **"GitHub"**.
-3. Select your repository.
-4. Configure the service parameters:
-   * **Root Directory**: `backend`
-   * **Builder**: Buildpack
-   * **Run Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
-5. Set Environment Variables:
-   * Add `GEMINI_API_KEY`, `SECRET_KEY`, `DATABASE_URL` (`sqlite:///./sql_app.db`), and `PYTHONPATH` (`.`).
-6. Click **"Deploy"** to start building.
+---
+
+## Default Credentials
+
+| Role | Email | Password | Default View |
+|---|---|---|---|
+| Admin | `admin@xenopulse.com` | `admin123` | Insights Engine |
+| Admin (alt) | `admin@xenopulse.ai` | `admin123` | Insights Engine |
+| Marketing Manager | `manager@xenopulse.com` | `manager123` | AI Command Center |
+
+---
+
+## Environment Variables Summary
+
+### Railway Backend
+```
+DATABASE_URL=postgresql://postgres:kQyYwPBLpsQSbMUbOjrmLfkeBraYjLob@thomas.proxy.rlwy.net:27897/railway
+SECRET_KEY=xenopulse-production-secret-key-2026
+GEMINI_API_KEY=<your-key>
+PYTHONPATH=.
+ACCESS_TOKEN_EXPIRE_MINUTES=11520
+```
+
+### Vercel Frontend
+```
+NEXT_PUBLIC_API_URL=https://<your-backend-service>.up.railway.app
+```
