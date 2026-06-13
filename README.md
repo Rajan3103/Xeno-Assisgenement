@@ -3,6 +3,13 @@
 
 XenoPulse is a high-performance, production-ready marketing operating system designed for modern retail organizations. The platform enables marketing teams to switch between active brand workspaces, generate data-driven campaigns from natural language using the Gemini API, parse customer segments semantically, run real-time message dispatch simulators, and monitor growth metrics instantly.
 
+## 🌐 Live Deployments
+
+| Component | Service Platform | Deployment URL |
+| :--- | :--- | :--- |
+| **Frontend Client** | Vercel | [xeno-assisgenement.vercel.app 🚀](https://xeno-assisgenement.vercel.app/) |
+| **Backend API Server** | Railway | [xenopulse-crm-backend-production.up.railway.app ⚙️](https://xenopulse-crm-backend-production.up.railway.app/) |
+
 ---
 
 ## 🏗️ System Architecture
