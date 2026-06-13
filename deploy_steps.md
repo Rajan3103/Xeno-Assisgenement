@@ -79,3 +79,24 @@ Since SQLite database files are initialized fresh on empty persistent volumes, y
    python -m app.seed
    ```
 5. This will populate your persistent database at `/data/sql_app.db` with exactly **1,000 customers**, **5,000 orders**, and initial administrator login accounts.
+
+---
+
+## Step 4: Deploy Vite React SPA Frontend to Vercel
+Vercel is the recommended hosting platform for static client SPAs.
+
+1. Log in to your [Vercel Dashboard](https://vercel.com).
+2. Click **"Add New..."** and select **"Project"**.
+3. Import your GitHub repository.
+4. Configure the Project Build Settings:
+   * **Framework Preset**: Vite
+   * **Root Directory**:
+     * **Monorepo Build**: Leave as `.` (our root [vercel.json](file:///e:/Xeno-Assisgenement/vercel.json) will automatically direct Vercel to build the `frontend` folder).
+     * **Subdirectory Build**: Set Root Directory to `frontend/`.
+5. Configure Environment Variables:
+   * Add a new environment variable:
+     * **Key**: `NEXT_PUBLIC_API_URL`
+     * **Value**: Your Render FastAPI backend service URL (e.g. `https://xenopulse-crm-backend.onrender.com`).
+6. Click **"Deploy"** and wait for Vercel to generate your static build.
+7. Access your dashboard at the generated Vercel domain!
+
