@@ -38,7 +38,10 @@ if str(engine.url).startswith("sqlite"):
             "ALTER TABLE customers ADD COLUMN rfm_recency INTEGER",
             "ALTER TABLE customers ADD COLUMN rfm_frequency INTEGER",
             "ALTER TABLE customers ADD COLUMN rfm_monetary INTEGER",
-            "ALTER TABLE customers ADD COLUMN tags VARCHAR"
+            "ALTER TABLE customers ADD COLUMN tags VARCHAR",
+            "ALTER TABLE customers ADD COLUMN signup_date DATETIME",
+            "ALTER TABLE customers ADD COLUMN created_at DATETIME",
+            "ALTER TABLE orders ADD COLUMN campaign_id INTEGER"
         ]
         for query in columns_to_add:
             try:
