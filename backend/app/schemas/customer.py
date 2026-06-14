@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -23,6 +23,13 @@ class CustomerBase(BaseModel):
 class CustomerCreate(CustomerBase):
     id: Optional[str] = None
 
+    @field_validator('id', mode='before')
+    @classmethod
+    def coerce_id(cls, v):
+        if v is not None:
+            return str(v)
+        return v
+
 class CustomerUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
@@ -45,6 +52,13 @@ class CustomerInDBBase(CustomerBase):
     id: str
     created_at: datetime
     owner_id: Optional[int] = None
+
+    @field_validator('id', mode='before')
+    @classmethod
+    def coerce_id(cls, v):
+        if v is not None:
+            return str(v)
+        return v
 
     class Config:
         from_attributes = True
