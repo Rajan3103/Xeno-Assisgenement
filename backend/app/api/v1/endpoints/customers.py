@@ -7,8 +7,39 @@ from app.crud import customer as crud_customer
 from app.schemas import customer as schema_customer
 from app.schemas import auth as schema_auth
 from app.api.v1.endpoints.auth import get_current_user
+from app.models.models import Customer
 
 router = APIRouter()
+
+@router.get("/stats")
+def get_customer_stats(
+    db: Session = Depends(get_db),
+    current_user: schema_auth.User = Depends(get_current_user),
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+) -> Any:
+    """Return total count and aggregate stats for the customer base."""
+    query = db.query(Customer)
+    if status:
+        query = query.filter(Customer.status == status)
+    if search:
+        sf = f"%{search}%"
+        query = query.filter(
+            (Customer.name.ilike(sf)) |
+            (Customer.email.ilike(sf)) |
+            (Customer.company.ilike(sf))
+        )
+    total = query.count()
+
+    # Aggregate health score proxy from RFM recency (1-5 scale → 0-100)
+    from sqlalchemy import func
+    avg_recency = db.query(func.avg(Customer.rfm_recency)).scalar() or 3.0
+    avg_health = round((avg_recency / 5.0) * 100)
+
+    return {
+        "totalProfiles": total,
+        "averageHealthScore": avg_health,
+    }
 
 @router.post("/", response_model=schema_customer.Customer, status_code=status.HTTP_201_CREATED)
 def create_customer(

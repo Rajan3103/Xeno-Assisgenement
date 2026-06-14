@@ -250,7 +250,7 @@ export default function CustomerIntelligence({
                     </td>
                     <td className="p-4 text-right">
                       <p className="font-semibold text-zinc-100">₹{customer.ltv.toLocaleString()}</p>
-                      <p className="text-[10px] text-zinc-550">Total spend</p>
+                      <p className="text-[10px] text-zinc-500">{(customer as any).orderCount ?? 0} orders</p>
                     </td>
                     <td className="p-4 text-center">
                       <span className={`inline-block px-3 py-1 rounded border text-xs font-semibold ${getHealthBadgeClass(customer.healthScore)}`}>

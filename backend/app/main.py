@@ -51,13 +51,15 @@ if str(engine.url).startswith("sqlite"):
 
 # Auto-seed database if empty on startup
 from app.core.database import SessionLocal
-from app.models.models import User
+from app.models.models import User, Customer
 from app.seed import main as seed_main
 
 db = SessionLocal()
 try:
-    if db.query(User).count() == 0:
-        print("[Startup] Database is empty. Seeding customer, order, and user data...")
+    user_count = db.query(User).count()
+    customer_count = db.query(Customer).count()
+    if user_count == 0 or customer_count == 0:
+        print(f"[Startup] Database needs seeding (users={user_count}, customers={customer_count}). Seeding now...")
         seed_main()
         print("[Startup] Database seeding completed successfully!")
 except Exception as e:

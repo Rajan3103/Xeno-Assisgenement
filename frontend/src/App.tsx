@@ -128,6 +128,8 @@ export default function App() {
   const handleLoginSuccess = (u: { name: string; email: string; role: string }) => {
     setUser(u);
     setActiveTab(u.role === "Admin" ? "insights" : "command");
+    // Load customers right after login
+    loadCustomers();
   };
 
   const checkSession = async () => {
@@ -138,6 +140,8 @@ export default function App() {
       if (data.success && data.user) {
         setUser(data.user);
         setActiveTab(data.user.role === "Admin" ? "insights" : "command");
+        // Load customers after auth is confirmed so token is available
+        loadCustomers();
       } else {
         setUser(null);
       }
@@ -197,8 +201,6 @@ export default function App() {
 
   useEffect(() => {
     checkSession();
-    loadCustomers();
-
 
     // Setup Socket.io client connection transparently over current host
     const socketInstance = io();

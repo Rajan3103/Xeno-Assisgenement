@@ -231,11 +231,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     let fetchUrl = url;
     let pageNum = 1;
     let limitNum = 50;
+    let searchParam = "";
+    let statusParam = "";
     try {
       const parsedUrl = new URL(url, window.location.origin);
       pageNum = parseInt(parsedUrl.searchParams.get("page") || "1");
       limitNum = parseInt(parsedUrl.searchParams.get("limit") || "50");
-      const search = parsedUrl.searchParams.get("search") || "";
+      searchParam = parsedUrl.searchParams.get("search") || "";
       const tag = parsedUrl.searchParams.get("tag") || "all";
       
       const skip = (pageNum - 1) * limitNum;
@@ -243,18 +245,22 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       parsedUrl.searchParams.set("limit", String(limitNum));
       parsedUrl.searchParams.delete("page");
       
-      if (search) {
-        parsedUrl.searchParams.set("search", search);
+      if (searchParam) {
+        parsedUrl.searchParams.set("search", searchParam);
       }
       
       if (tag && tag !== "all") {
         if (tag === "VIP" || tag === "High Spender" || tag === "Frequent") {
+          statusParam = "Customer";
           parsedUrl.searchParams.set("status", "Customer");
         } else if (tag === "Inactive") {
+          statusParam = "Inactive";
           parsedUrl.searchParams.set("status", "Inactive");
         } else if (tag === "New") {
+          statusParam = "Lead";
           parsedUrl.searchParams.set("status", "Lead");
         } else {
+          statusParam = tag;
           parsedUrl.searchParams.set("status", tag);
         }
         parsedUrl.searchParams.delete("tag");
@@ -271,32 +277,54 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const data = await res.json();
       if (Array.isArray(data)) {
         const mappedCustomers = data.map((c: any) => {
-          const tags = c.tags ? c.tags.split(",") : [c.status === "Inactive" ? "Inactive" : c.status === "Lead" ? "New" : "Customer"];
-          const healthScore = c.rfm_recency ? (c.rfm_recency * 12) + ((c.rfm_frequency || 1) * 8) : 80;
-          const ltv = c.total_spent !== undefined ? c.total_spent : 0;
+          const rawTags = c.tags ? c.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+          const tags = rawTags.length > 0 ? rawTags : [c.status === "Inactive" ? "Inactive" : c.status === "Lead" ? "New" : "Customer"];
+          const rfmR = Number(c.rfm_recency) || 0;
+          const rfmF = Number(c.rfm_frequency) || 1;
+          const healthScore = rfmR > 0 ? Math.min(100, (rfmR * 12) + (rfmF * 8)) : 65;
+          const ltv = Number(c.total_spent) || 0;
+          const orderCount = Number(c.order_count) || 0;
           return {
             id: String(c.id),
             name: c.name,
             email: c.email,
-            phone: c.phone,
+            phone: c.phone || "+91-000-000-0000",
             city: c.city || "Chennai",
             ltv: ltv,
             healthScore: healthScore,
             tags: tags,
+            orderCount: orderCount,
             lastActivityAt: c.last_order_date || c.created_at || new Date().toISOString(),
             createdAt: c.created_at || new Date().toISOString(),
             purchaseHistory: [],
             campaignTimeline: [],
           };
         });
-        const totalProfiles = data.length < limitNum ? (pageNum - 1) * limitNum + data.length : 1000;
-        const totalPages = Math.ceil(totalProfiles / limitNum);
+
+        // Fetch real total count from /stats endpoint
+        let totalProfiles = (pageNum - 1) * limitNum + data.length;
+        let avgHealthScore = 75;
+        try {
+          const statsParams = new URLSearchParams();
+          if (searchParam) statsParams.set("search", searchParam);
+          if (statusParam) statsParams.set("status", statusParam);
+          const statsRes = await originalFetch(`/api/v1/customers/stats?${statsParams.toString()}`, {
+            headers: getHeaders()
+          });
+          if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            totalProfiles = statsData.totalProfiles || totalProfiles;
+            avgHealthScore = statsData.averageHealthScore || avgHealthScore;
+          }
+        } catch(se) { /* use estimated fallback */ }
+
+        const totalPages = Math.max(1, Math.ceil(totalProfiles / limitNum));
         return new Response(JSON.stringify({
           success: true,
           customers: mappedCustomers,
           stats: {
             totalProfiles: totalProfiles,
-            averageHealthScore: 82,
+            averageHealthScore: avgHealthScore,
           },
           pagination: {
             page: pageNum,
@@ -313,18 +341,22 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       // Single customer details response
       if (data && data.id) {
         const c = data;
-        const tags = c.tags ? c.tags.split(",") : [c.status === "Inactive" ? "Inactive" : c.company ? c.company : "Customer"];
-        const healthScore = c.rfm_recency ? (c.rfm_recency * 12) + ((c.rfm_frequency || 1) * 8) : 80;
-        const ltv = c.total_spent !== undefined ? c.total_spent : 0;
+        const rawTags = c.tags ? c.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+        const tags = rawTags.length > 0 ? rawTags : [c.status === "Inactive" ? "Inactive" : c.company ? c.company : "Customer"];
+        const rfmR = Number(c.rfm_recency) || 0;
+        const rfmF = Number(c.rfm_frequency) || 1;
+        const healthScore = rfmR > 0 ? Math.min(100, (rfmR * 12) + (rfmF * 8)) : 65;
+        const ltv = Number(c.total_spent) || 0;
         const mappedCustomer = {
           id: String(c.id),
           name: c.name,
           email: c.email,
-          phone: c.phone,
+          phone: c.phone || "+91-000-000-0000",
           city: c.city || "Chennai",
           ltv: ltv,
           healthScore: healthScore,
           tags: tags,
+          orderCount: Number(c.order_count) || 0,
           lastActivityAt: c.last_order_date || c.created_at || new Date().toISOString(),
           createdAt: c.created_at || new Date().toISOString(),
           purchaseHistory: [
