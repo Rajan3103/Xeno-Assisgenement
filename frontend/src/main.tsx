@@ -5,7 +5,10 @@ import './index.css';
 
 // Global Fetch Interceptor to map Vite React SPA to FastAPI Backend
 const realFetch = window.fetch;
-const apiBase = (import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+let apiBase = (import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+if (apiBase && typeof window !== "undefined" && window.location.protocol === "https:" && apiBase.startsWith("http://")) {
+  apiBase = apiBase.replace("http://", "https://");
+}
 
 const originalFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (apiBase) {
@@ -41,7 +44,14 @@ const originalFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 };
 
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  let url = typeof input === "string" ? input : input.toString();
+  let url = typeof input === "string" ? input : (input as any).url || input.toString();
+
+  // Extract path for reliable mock interceptor checks
+  let path = url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    path = parsed.pathname;
+  } catch (e) {}
 
   // Helper to get headers with Auth token
   const getHeaders = (extra: Record<string, string> = {}) => {
@@ -57,7 +67,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   };
 
   // 1. Intercept Login
-  if (url === "/api/auth/login" && init?.method === "POST" && init.body) {
+  if (path === "/api/auth/login" && init?.method === "POST" && init.body) {
     try {
       const bodyData = JSON.parse(init.body as string);
       const params = new URLSearchParams();
@@ -127,7 +137,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 2. Intercept Session Check
-  if (url === "/api/auth/session") {
+  if (path === "/api/auth/session") {
     const token = localStorage.getItem("xp_token");
     if (!token) {
       return new Response(JSON.stringify({ success: false }), {
@@ -175,7 +185,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 3. Intercept Logout
-  if (url === "/api/auth/logout" && init?.method === "POST") {
+  if (path === "/api/auth/logout" && init?.method === "POST") {
     localStorage.removeItem("xp_token");
     localStorage.removeItem("xp_role");
     return new Response(JSON.stringify({ success: true }), {
@@ -185,14 +195,14 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 4. Intercept Companies & Users Mock routes
-  if (url === "/api/companies" && init?.method === "GET") {
+  if (path === "/api/companies" && init?.method === "GET") {
     return new Response(JSON.stringify({
       success: true,
       companies: [{ id: "chennai", name: "Chennai Coffee Co." }]
     }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
-  if (url === "/api/companies" && init?.method === "POST") {
+  if (path === "/api/companies" && init?.method === "POST") {
     const bodyData = JSON.parse(init.body as string);
     return new Response(JSON.stringify({
       success: true,
@@ -200,7 +210,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
-  if (url === "/api/users" && init?.method === "GET") {
+  if (path === "/api/users" && init?.method === "GET") {
     // Return empty user roster stub
     return new Response(JSON.stringify({
       success: true,
@@ -208,16 +218,16 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
-  if (url.startsWith("/api/users") && init?.method === "POST") {
+  if (path.startsWith("/api/users") && init?.method === "POST") {
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
-  if (url === "/api/auth/company" && init?.method === "POST") {
+  if (path === "/api/auth/company" && init?.method === "POST") {
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
   // 5. Intercept Customer Listing and Details (Enriching mock ltv & healthScore)
-  if (url.includes("/api/customers")) {
+  if (path.includes("/api/customers")) {
     let fetchUrl = url;
     let pageNum = 1;
     let limitNum = 50;
@@ -334,7 +344,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 6. Intercept AI CommandCenter goals analyze
-  if (url === "/api/goals/analyze" && init?.method === "POST" && init.body) {
+  if (path === "/api/goals/analyze" && init?.method === "POST" && init.body) {
     try {
       const bodyData = JSON.parse(init.body as string);
       
@@ -366,7 +376,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 7. Intercept AudienceStudio AI segment analyze
-  if (url === "/api/audiences/analyze" && init?.method === "POST" && init.body) {
+  if (path === "/api/audiences/analyze" && init?.method === "POST" && init.body) {
     try {
       const bodyData = JSON.parse(init.body as string);
       const res = await originalFetch("/api/v1/ai/segment", {
@@ -401,10 +411,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
   }
 
-    // 8. Intercept Campaigns create and list
-  if (url.includes("/api/campaigns")) {
+  // 8. Intercept Campaigns create and list
+  if (path.includes("/api/campaigns")) {
     // Create Campaign
-    if (init?.method === "POST" && init.body && url.endsWith("/api/campaigns")) {
+    if (init?.method === "POST" && init.body && path.endsWith("/api/campaigns")) {
       try {
         const bodyData = JSON.parse(init.body as string);
         const payload = {
@@ -451,8 +461,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
 
     // Launch Campaign send
-    if (url.match(/\/api\/campaigns\/\d+\/send/)) {
-      const campId = url.match(/\/api\/campaigns\/(\d+)\/send/)?.[1];
+    if (path.match(/\/api\/campaigns\/\d+\/send/)) {
+      const campId = path.match(/\/api\/campaigns\/(\d+)\/send/)?.[1];
       const res = await originalFetch(`/api/v1/campaigns/${campId}/launch`, {
         method: "POST",
         headers: getHeaders()
@@ -464,7 +474,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
 
     // Run Campaign simulation pause
-    if (url.match(/\/api\/campaigns\/\d+\/pause/)) {
+    if (path.match(/\/api\/campaigns\/\d+\/pause/)) {
       const sim = (window as any).campaignSimulation;
       let nextPaused = false;
       if (sim && typeof sim.togglePause === "function") {
@@ -477,7 +487,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
 
     // Run Campaign simulation speed
-    if (url.match(/\/api\/campaigns\/\d+\/speed/)) {
+    if (path.match(/\/api\/campaigns\/\d+\/speed/)) {
       const sim = (window as any).campaignSimulation;
       let newSpeed = 1;
       try {
@@ -495,7 +505,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   // 9. Intercept Insights
-  if (url === "/api/insights" && init?.method === "GET") {
+  if (path === "/api/insights" && init?.method === "GET") {
     // Fetch global analytics to dynamically compute some insights metrics
     let sentCount = 1000, deliveredCount = 980, clickedCount = 145;
     try {
