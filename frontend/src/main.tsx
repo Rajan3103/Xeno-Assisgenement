@@ -9,27 +9,29 @@ const apiBase = (import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API
 
 const originalFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (apiBase) {
+    const rewritePath = (p: string) => p.startsWith('/api/v1') ? p : p.replace(/^\/api/, '/api/v1');
+
     if (typeof input === "string") {
       if (input.startsWith("/api/")) {
-        return realFetch(apiBase + input, init);
+        return realFetch(apiBase + rewritePath(input), init);
       } else if (input.includes("/api/")) {
         try {
           const parsed = new URL(input);
           if (parsed.pathname.startsWith("/api/")) {
-            return realFetch(apiBase + parsed.pathname + parsed.search, init);
+            return realFetch(apiBase + rewritePath(parsed.pathname) + parsed.search, init);
           }
         } catch (e) {}
       }
     } else if (input instanceof URL) {
       if (input.pathname.startsWith("/api/")) {
-        return realFetch(new URL(apiBase + input.pathname + input.search), init);
+        return realFetch(new URL(apiBase + rewritePath(input.pathname) + input.search), init);
       }
     } else if (input && typeof (input as any).url === "string") {
       const req = input as Request;
       try {
         const parsed = new URL(req.url);
         if (parsed.pathname.startsWith("/api/")) {
-          const newRequest = new Request(apiBase + parsed.pathname + parsed.search, req);
+          const newRequest = new Request(apiBase + rewritePath(parsed.pathname) + parsed.search, req);
           return realFetch(newRequest, init);
         }
       } catch (e) {}
