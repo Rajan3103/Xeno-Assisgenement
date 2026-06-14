@@ -743,6 +743,10 @@ export default function App() {
                 activeCampaignStatus={activeCampaignStatus}
                 activeCampaignName={activeCampaignName}
                 activeCampaignSize={activeCampaignSize}
+                onCustomerClick={(customerId) => {
+                  setSelectedCustomerId(customerId);
+                  setActiveTab("customers");
+                }}
               />
             )}
 

@@ -33,13 +33,15 @@ interface LiveMonitorProps {
   activeCampaignStatus: CampaignStatus | null;
   activeCampaignName?: string;
   activeCampaignSize?: number;
+  onCustomerClick?: (customerId: string) => void;
 }
 
 export default function LiveMonitor({
   liveLogs,
   activeCampaignStatus,
   activeCampaignName = "Select a campaign to begin tracking",
-  activeCampaignSize = 1000
+  activeCampaignSize = 1000,
+  onCustomerClick
 }: LiveMonitorProps) {
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -287,7 +289,16 @@ export default function LiveMonitor({
                 <div key={log.id} className="p-2.5 rounded bg-zinc-950 border border-zinc-850 space-y-1 animate-fade-in relative overflow-hidden">
                   <div className="flex justify-between items-start gap-1">
                     <div>
-                      <span className="text-zinc-200 font-semibold">{log.customerName}</span>
+                      <span 
+                        className={`font-semibold ${log.customerId ? 'text-indigo-400 hover:text-indigo-300 cursor-pointer underline decoration-indigo-400/30 underline-offset-2' : 'text-zinc-200'}`}
+                        onClick={() => {
+                          if (log.customerId && onCustomerClick) {
+                            onCustomerClick(log.customerId);
+                          }
+                        }}
+                      >
+                        {log.customerName}
+                      </span>
                       <span className="text-zinc-500 ml-1">via {log.channel}</span>
                     </div>
                     <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border leading-none shrink-0 ${getStateColor(log.state)}`}>
