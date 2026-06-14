@@ -49,11 +49,20 @@ export default function InsightsEngine({ onQuickRescue }: InsightsEngineProps) {
   const fetchCampaigns = async () => {
     setCampaignsLoading(true);
     try {
-      const res = await fetch("/api/campaigns");
-      const d = await res.json();
-      if (d.success && d.campaigns) {
+      const res = await fetch("/api/v1/campaigns");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // Map backend Campaign model keys to camelCase used by chart
+        const mappedCampaigns = data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          sentCount: c.sent_count || 0,
+          openedCount: c.opened_count || 0,
+          clickedCount: c.clicked_count || 0,
+          convertedCount: c.revenue_attributed ? 1 : 0
+        }));
         // Only compare campaigns that have active simulation logs
-        const completedCampaigns = d.campaigns.filter((c: any) => c.sentCount > 0);
+        const completedCampaigns = mappedCampaigns.filter((c: any) => c.sentCount > 0);
         setCampaigns(completedCampaigns);
         if (completedCampaigns.length > 0) {
           setSelectedCampaignIds(completedCampaigns.slice(0, 3).map((c: any) => c.id));

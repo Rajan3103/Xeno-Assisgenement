@@ -401,10 +401,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
   }
 
-  // 8. Intercept Campaigns create and list
+    // 8. Intercept Campaigns create and list
   if (url.includes("/api/campaigns")) {
     // Create Campaign
-    if (init?.method === "POST" && init.body) {
+    if (init?.method === "POST" && init.body && url.endsWith("/api/campaigns")) {
       try {
         const bodyData = JSON.parse(init.body as string);
         const payload = {
@@ -491,47 +491,6 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
-    }
-
-    // List Campaigns
-    const res = await originalFetch(input, {
-      ...init,
-      headers: getHeaders(),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const mappedCampaigns = data.map((c: any) => {
-          let msgText = c.message;
-          try {
-            const parsed = JSON.parse(c.message);
-            msgText = parsed.body || c.message;
-          } catch (e) {}
-
-          return {
-            id: String(c.id),
-            name: c.name,
-            channel: c.channel,
-            messageTemplate: msgText,
-            audienceSegmentName: c.segment,
-            audienceSize: 1000,
-            status: c.status === "Active" ? "RUNNING" : "DRAFT",
-            sentCount: 320,
-            deliveredCount: 66,
-            openedCount: 65,
-            readCount: 73,
-            clickedCount: 63,
-            convertedCount: 6,
-            failedCount: 37,
-            createdAt: c.created_at || new Date().toISOString()
-          };
-        });
-        return new Response(JSON.stringify({ success: true, campaigns: mappedCampaigns }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
     }
   }
 
