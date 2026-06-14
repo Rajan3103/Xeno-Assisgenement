@@ -45,6 +45,7 @@ import InsightsEngine from "./components/InsightsEngine.js";
 import SettingsPanel from "./components/SettingsPanel.js";
 import { Customer } from "./db/storage.js";
 import Login from "./components/Login.js";
+import LandingPage from "./components/LandingPage.js";
 
 
 interface LiveEvent {
@@ -87,6 +88,7 @@ export default function App() {
   const [systemAlert, setSystemAlert] = useState<string | null>(null);
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showLanding, setShowLanding] = useState(true); // show landing page first
 
   // Pagination and optimized state variables
   const [totalCustomers, setTotalCustomers] = useState(0);
@@ -139,6 +141,7 @@ export default function App() {
       const data = await res.json();
       if (data.success && data.user) {
         setUser(data.user);
+        setShowLanding(false); // skip landing for returning sessions
         setActiveTab(data.user.role === "Admin" ? "insights" : "command");
         // Load customers after auth is confirmed so token is available
         loadCustomers();
@@ -523,8 +526,23 @@ export default function App() {
     );
   }
 
+  // Show landing page first (unless already has a session)
+  if (!user && showLanding) {
+    return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+  }
+
   if (!user) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <div className="relative">
+        <Login onLoginSuccess={handleLoginSuccess} />
+        <button
+          onClick={() => setShowLanding(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-zinc-600 hover:text-zinc-400 font-mono transition-colors cursor-pointer z-50"
+        >
+          ← Back to home
+        </button>
+      </div>
+    );
   }
 
   return (
