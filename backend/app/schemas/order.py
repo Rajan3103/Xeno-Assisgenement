@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 class OrderBase(BaseModel):
     customer_id: str
@@ -9,6 +9,13 @@ class OrderBase(BaseModel):
     category: str
     campaign_id: Optional[int] = None
     status: Optional[str] = "completed"
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_total_amount(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "total_amount" in data and "amount" not in data:
+            data["amount"] = data.get("total_amount")
+        return data
 
 class OrderCreate(OrderBase):
     id: Optional[str] = None

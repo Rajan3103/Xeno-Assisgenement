@@ -93,7 +93,7 @@ def create_order(db: Session, order: OrderCreate):
     # Update customer metrics
     customer = db.query(Customer).filter(Customer.id == db_order.customer_id).first()
     if customer:
-        customer.total_spent = (customer.total_spent or 0.0) + float(db_order.total_amount)
+        customer.total_spent = (customer.total_spent or 0.0) + float(db_order.amount)
         # customer has 'orders' column? No, wait. Let's check Customer model.
         # It has total_spent. We can just update total_spent.
         

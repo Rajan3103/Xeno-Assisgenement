@@ -425,7 +425,7 @@ export default function App() {
               body: JSON.stringify({
                 customer_id: String(randCustomer.id),
                 status: "Completed",
-                total_amount: Math.floor(Math.random() * 80) + 20,
+                amount: Math.floor(Math.random() * 80) + 20,
                 category: "Store",
                 product_name: selectedProduct
               })
