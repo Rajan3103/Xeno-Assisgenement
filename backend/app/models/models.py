@@ -174,3 +174,13 @@ class ReceiptIdempotency(Base):
 
     idempotency_key = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True, nullable=False)
+    category = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    is_active = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)

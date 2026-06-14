@@ -12,15 +12,20 @@ interface CampaignStudioProps {
     audienceSegmentName: string;
     audienceSize: number;
   }) => void;
+  onSelectPastCampaign?: (campaign: any) => void;
 }
 
 export default function CampaignStudio({
   initialAudienceName = "Lapsed High-Value Shoppers",
   initialAudienceSize = 12482,
   initialMessageTemplate = "",
-  onLaunchCampaign
+  onLaunchCampaign,
+  onSelectPastCampaign
 }: CampaignStudioProps) {
   const [name, setName] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [campaignHistory, setCampaignHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
   const [channel, setChannel] = useState<'WhatsApp' | 'SMS' | 'Email' | 'RCS'>('WhatsApp');
   const [messageTemplate, setMessageTemplate] = useState("");
   const [segmentName, setSegmentName] = useState("");
@@ -47,6 +52,22 @@ export default function CampaignStudio({
       console.error("Failed to fetch segment count", e);
     }
   };
+
+  const fetchCampaignHistory = async () => {
+    try {
+      const res = await fetch("/api/v1/campaigns");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setCampaignHistory(data.reverse());
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (showHistory) fetchCampaignHistory();
+  }, [showHistory]);
 
   useEffect(() => {
     const defaultSegments = [
@@ -215,11 +236,68 @@ export default function CampaignStudio({
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-2 font-display-sm">Campaign Studio</h2>
-        <p className="text-zinc-400 text-lg font-body-lg">Design, personalize, and launch high-impact retail experiences.</p>
+    <div className="space-y-8 animate-fade-in relative">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-white mb-2 font-display-sm">Campaign Studio</h2>
+          <p className="text-zinc-400 text-lg font-body-lg">Design, personalize, and launch high-impact retail experiences.</p>
+        </div>
+        <button
+          onClick={() => setShowHistory(true)}
+          className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+        >
+          View History
+        </button>
       </div>
+
+      {showHistory && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-3xl max-h-[80vh] rounded-xl flex flex-col shadow-2xl">
+            <div className="p-4 border-b border-zinc-850 flex justify-between items-center">
+              <h3 className="font-semibold text-white">Campaign History</h3>
+              <button onClick={() => setShowHistory(false)} className="text-zinc-500 hover:text-white">Close</button>
+            </div>
+            <div className="p-4 border-b border-zinc-850">
+              <input
+                type="text"
+                placeholder="Search campaigns..."
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 focus:border-indigo-500 rounded-lg p-2.5 text-zinc-100 placeholder-zinc-700 outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {campaignHistory
+                .filter(c => c.name.toLowerCase().includes(historySearch.toLowerCase()) || (c.segment || "").toLowerCase().includes(historySearch.toLowerCase()))
+                .map((c, idx) => (
+                <div key={idx} className="bg-zinc-900 border border-zinc-800 p-4 rounded-lg flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-zinc-100 text-sm">{c.name}</h4>
+                    <p className="text-xs text-zinc-500 mt-1">Segment: {c.segment} • Channel: {c.channel}</p>
+                    <div className="flex gap-4 mt-2 text-[10px] font-mono text-zinc-400">
+                      <span>Sent: {c.sent_count || 0}</span>
+                      <span>Delivered: {c.delivered_count || 0}</span>
+                      <span>Converted: {c.revenue_attributed ? "Yes" : "No"}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowHistory(false);
+                      if (onSelectPastCampaign) onSelectPastCampaign(c);
+                    }}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold"
+                  >
+                    View Monitor
+                  </button>
+                </div>
+              ))}
+              {campaignHistory.length === 0 && (
+                <div className="text-center text-zinc-500 py-8">No campaigns found.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Input Configuration Column */}

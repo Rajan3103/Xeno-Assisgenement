@@ -373,6 +373,19 @@ export default function App() {
       if (socketToUse) {
         // Emit update status
         socketToUse.emit("campaign:update", nextStatus);
+        
+        // Sync metrics to backend
+        fetch(`/api/v1/campaigns/${currentStatus.campaignId}/metrics`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sent_count: nextSent,
+            delivered_count: nextDelivered,
+            opened_count: nextOpened,
+            clicked_count: nextClicked,
+            failed_count: nextFailed
+          })
+        }).catch(console.error);
 
         // Emit 1-2 random logs
         const numEvents = Math.min(3, Math.max(1, Math.floor(Math.random() * batch)));
@@ -391,6 +404,7 @@ export default function App() {
           else if (randVal > 0.08) state = "FAILED";
 
           const products = ["Classic Espresso Blend", "Dark Roast Whole Bean", "Arabica Filter Coffee", "Cold Brew Kit", "Ceramic Mug"];
+          const selectedProduct = products[Math.floor(Math.random() * products.length)];
           const eventData = {
             id: Math.random().toString(36).substring(2, 9),
             timestamp: new Date().toISOString(),
@@ -401,8 +415,22 @@ export default function App() {
             customerId: String(randCustomer.id),
             channel: "WhatsApp",
             state: state,
-            product: state === "CONVERTED" ? products[Math.floor(Math.random() * products.length)] : undefined
+            product: state === "CONVERTED" ? selectedProduct : undefined
           };
+
+          if (state === "CONVERTED" && randCustomer.id) {
+            fetch(`/api/v1/orders/`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customer_id: String(randCustomer.id),
+                status: "Completed",
+                total_amount: Math.floor(Math.random() * 80) + 20,
+                category: "Store",
+                product_name: selectedProduct
+              })
+            }).catch(console.error);
+          }
 
           socketToUse.emit("live:event", eventData);
         }
@@ -688,6 +716,24 @@ export default function App() {
                 initialAudienceSize={transientStrategy?.audienceSize}
                 initialMessageTemplate={transientStrategy?.message}
                 onLaunchCampaign={handleCampaignLaunched}
+                onSelectPastCampaign={(cam) => {
+                  setActiveCampaignName(cam.name);
+                  setActiveCampaignSize(cam.total_recipients || cam.sent_count || 1);
+                  setActiveCampaignStatus({
+                    campaignId: cam.id,
+                    sentCount: cam.sent_count || 0,
+                    deliveredCount: cam.delivered_count || 0,
+                    openedCount: cam.opened_count || 0,
+                    readCount: 0,
+                    clickedCount: cam.clicked_count || 0,
+                    convertedCount: cam.revenue_attributed ? 1 : 0,
+                    failedCount: cam.failed_count || 0,
+                    paused: true,
+                    speed: 0
+                  });
+                  setLiveLogs([]);
+                  setActiveTab("live");
+                }}
               />
             )}
 

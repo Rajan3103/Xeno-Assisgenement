@@ -239,3 +239,31 @@ def get_campaign_analytics(
         click_rate=click_rate
     )
 
+@router.put("/{campaign_id}/metrics", response_model=schema_campaign.Campaign)
+def update_campaign_metrics(
+    campaign_id: int,
+    metrics: schema_campaign.CampaignMetricsUpdate,
+    db: Session = Depends(get_db),
+    current_user: schema_auth.User = Depends(get_current_user),
+) -> Any:
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+        
+    if metrics.sent_count is not None:
+        campaign.sent_count = metrics.sent_count
+    if metrics.delivered_count is not None:
+        campaign.delivered_count = metrics.delivered_count
+    if metrics.opened_count is not None:
+        campaign.opened_count = metrics.opened_count
+    if metrics.clicked_count is not None:
+        campaign.clicked_count = metrics.clicked_count
+    if metrics.failed_count is not None:
+        campaign.failed_count = metrics.failed_count
+    if metrics.revenue_attributed is not None:
+        campaign.revenue_attributed = metrics.revenue_attributed
+
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    return campaign

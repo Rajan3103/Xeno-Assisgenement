@@ -19,6 +19,14 @@ class CampaignUpdate(BaseModel):
     channel: Optional[str] = None
     status: Optional[str] = None
 
+class CampaignMetricsUpdate(BaseModel):
+    sent_count: Optional[int] = None
+    delivered_count: Optional[int] = None
+    opened_count: Optional[int] = None
+    clicked_count: Optional[int] = None
+    failed_count: Optional[int] = None
+    revenue_attributed: Optional[float] = None
+
 class CampaignInDBBase(CampaignBase):
     id: int
     created_at: datetime

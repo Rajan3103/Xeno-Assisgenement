@@ -19,6 +19,16 @@ export default function SettingsPanel({ onCompanyChanged, user }: SettingsPanelP
   const [creating, setCreating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Workshop toggles
+  const [activeCustomerWorkshop, setActiveCustomerWorkshop] = useState(false);
+  const [activeShopWorkshop, setActiveShopWorkshop] = useState(true);
+
+  // Product Catalog
+  const [productName, setProductName] = useState("");
+  const [productCategory, setProductCategory] = useState("Store");
+  const [productPrice, setProductPrice] = useState("50.0");
+  const [addingProduct, setAddingProduct] = useState(false);
+
   // Tab management & user administration states
   const [activeSection, setActiveSection] = useState(0);
   const [users, setUsers] = useState<Array<{ id: string; name: string; email: string; role: string; company?: { name: string } | null; createdAt: string }>>([]);
@@ -125,6 +135,29 @@ export default function SettingsPanel({ onCompanyChanged, user }: SettingsPanelP
       setErrorMsg("Network error: failed to create company.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productName.trim() || !productCategory.trim() || !productPrice.trim()) return;
+    setAddingProduct(true);
+    try {
+      await fetch("/api/v1/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: productName.trim(),
+          category: productCategory.trim(),
+          price: parseFloat(productPrice)
+        })
+      });
+      setProductName("");
+      saveSettings(); // Show success banner
+    } catch (err) {
+      console.error("Failed to add product", err);
+    } finally {
+      setAddingProduct(false);
     }
   };
 
@@ -259,13 +292,15 @@ export default function SettingsPanel({ onCompanyChanged, user }: SettingsPanelP
         { label: "AI Models & Weights", icon: Sliders },
         { label: "Developer Keys & Webhooks", icon: Key },
         { label: "Workspace User Roster", icon: Users },
-        { label: "Notification Channels", icon: Bell }
+        { label: "Notification Channels", icon: Bell },
+        { label: "Product Catalog", icon: Plus }
       ]
     : [
         { label: "Profile & Brand Workspace", icon: User },
         { label: "AI Models & Weights", icon: Sliders },
         { label: "Developer Keys & Webhooks", icon: Key },
-        { label: "Notification Channels", icon: Bell }
+        { label: "Notification Channels", icon: Bell },
+        { label: "Product Catalog", icon: Plus }
       ];
 
   return (
@@ -374,6 +409,36 @@ export default function SettingsPanel({ onCompanyChanged, user }: SettingsPanelP
                     </button>
                   </div>
                 </form>
+              </div>
+
+              <div className="border-t border-zinc-850 pt-4 mt-2 space-y-4">
+                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest block font-mono">Administrative Workshops</h4>
+                
+                <label className="flex items-center justify-between p-3.5 bg-zinc-950 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-800 transition-colors">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-200 block">Active Customer Workshop</span>
+                    <span className="text-[10px] text-zinc-500 font-mono mt-0.5">Enable deep customer analytics training workshop</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={activeCustomerWorkshop}
+                    onChange={(e) => setActiveCustomerWorkshop(e.target.checked)}
+                    className="accent-indigo-500 w-4 h-4 cursor-pointer"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-3.5 bg-zinc-950 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-800 transition-colors">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-200 block">Active Shop Workshop</span>
+                    <span className="text-[10px] text-zinc-500 font-mono mt-0.5">Enable retail flow optimization tools</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={activeShopWorkshop}
+                    onChange={(e) => setActiveShopWorkshop(e.target.checked)}
+                    className="accent-indigo-500 w-4 h-4 cursor-pointer"
+                  />
+                </label>
               </div>
             </section>
           )}
@@ -576,6 +641,69 @@ export default function SettingsPanel({ onCompanyChanged, user }: SettingsPanelP
                     className="accent-indigo-500 w-4 h-4 cursor-pointer"
                   />
                 </label>
+              </div>
+            </section>
+          )}
+
+          {/* Section: Product Catalog */}
+          {activeSection === settingItems.length - 1 && (
+            <section className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4 shadow-xl animate-fade-in">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Plus size={16} className="text-indigo-400" />
+                  <h3 className="font-semibold text-white text-sm">Product Catalog</h3>
+                </div>
+              </div>
+              <p className="text-zinc-555 text-xs">Add new products to your store catalog. These will be available for customers to purchase during campaigns.</p>
+              
+              <div className="border-t border-zinc-850 pt-4 mt-2">
+                <form onSubmit={handleAddProduct} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block font-mono">Product Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Premium Blend Coffee"
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                        disabled={addingProduct}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 placeholder-zinc-700 outline-none focus:ring-1 focus:ring-indigo-500 text-sm mt-1 disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block font-mono">Category</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Store"
+                        value={productCategory}
+                        onChange={(e) => setProductCategory(e.target.value)}
+                        disabled={addingProduct}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 placeholder-zinc-700 outline-none focus:ring-1 focus:ring-indigo-500 text-sm mt-1 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1 w-full md:w-1/2 pr-2">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block font-mono">Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="50.00"
+                      value={productPrice}
+                      onChange={(e) => setProductPrice(e.target.value)}
+                      disabled={addingProduct}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-100 placeholder-zinc-700 outline-none focus:ring-1 focus:ring-indigo-500 text-sm mt-1 disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={addingProduct || !productName.trim() || !productCategory.trim() || !productPrice.trim()}
+                      className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-all shadow-lg shadow-indigo-600/20 active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      {addingProduct ? "Adding..." : "Add Product"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </section>
           )}

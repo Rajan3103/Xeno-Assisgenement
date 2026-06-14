@@ -89,6 +89,14 @@ def create_order(db: Session, order: OrderCreate):
     else:
         db_order.id = f"ord_{uuid.uuid4().hex[:9]}"
     db.add(db_order)
+    
+    # Update customer metrics
+    customer = db.query(Customer).filter(Customer.id == db_order.customer_id).first()
+    if customer:
+        customer.total_spent = (customer.total_spent or 0.0) + float(db_order.total_amount)
+        # customer has 'orders' column? No, wait. Let's check Customer model.
+        # It has total_spent. We can just update total_spent.
+        
     db.commit()
     db.refresh(db_order)
     return db_order

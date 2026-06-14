@@ -11,5 +11,7 @@ api_router.include_router(campaigns.router, prefix="/campaigns", tags=["campaign
 api_router.include_router(communications.router, prefix="/communications", tags=["communications"])
 api_router.include_router(receipts.router, tags=["receipts"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+from app.api.v1.endpoints import products
+api_router.include_router(products.router, prefix="/products", tags=["products"])
 
 
